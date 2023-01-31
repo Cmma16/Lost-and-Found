@@ -1,6 +1,7 @@
 <script setup>
+import { ref, onMounted } from "vue";
 import { RouterLink, RouterView } from "vue-router";
-import NavigationBar from "./components/NavBar.vue";
+import { db } from "@/firebase";
 </script>
 
 <template>

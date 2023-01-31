@@ -21,6 +21,12 @@ const router = createRouter({
 
       component: () => import("../views/PostDetailView.vue"),
     },
+    {
+      path: "/create-report",
+      name: "CreateReport",
+
+      component: () => import("../views/CreateReport.vue"),
+    },
   ],
 });
 

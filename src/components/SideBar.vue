@@ -21,9 +21,11 @@
         <span class="font-normal text-base mt-2">Email Address</span>
         <p class="font-medium text-xl">YourEmail@email.com</p>
       </div>
-      <button class="rounded-full bg-[#00A651] h-10 m-3">
-        Create New Report
-      </button>
+      <RouterLink to="/create-report" class="flex flex-col">
+        <button class="rounded-full bg-[#00A651] h-10 m-3">
+          Create New Report
+        </button>
+      </RouterLink>
     </div>
   </div>
 </template>
