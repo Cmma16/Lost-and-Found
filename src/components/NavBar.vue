@@ -15,13 +15,12 @@ defineProps({
     <ul class="flex flex-row items-stretch justify-between">
       <li class="mx-1 my-2 px-3 rounded-full sm:block hidden">
         <a class="flex justify-items-center" href="">
-          <RouterLink to="home"></RouterLink>
           <span class="material-symbols-outlined"> menu </span>
           All
         </a>
       </li>
       <li class="mx-1 my-2 px-3 rounded-full sm:block hidden">
-        <a class="flex justify-items-center" href="./CreateReport.html">
+        <a class="flex justify-items-center" href="">
           <span class="material-symbols-outlined"> help_center </span>
           Lost
         </a>

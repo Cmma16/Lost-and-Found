@@ -1,9 +1,10 @@
 <script>
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
+import { db } from "@/firebase";
+import { query, where, collection, getDocs, doc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { onMounted } from "vue";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { async } from "@firebase/util";
 
 export default {
@@ -11,27 +12,42 @@ export default {
     const route = useRoute();
     const router = useRouter();
     const store = useStore();
+  },
+  data() {
     const auth = getAuth();
-    const user_email = ref("");
-    const number = ref("");
-    const uid = ref("");
+    const usr = ref({});
+    const userUID = ref("");
+
+    //const tempUser = {};
 
     onMounted(async () => {
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          uid.value = user.uid;
+          getUserUID(user.uid);
         }
       });
     });
 
-    const goToLogin = () => {
-      router.push({ name: "home" });
-    };
+    async function getUserUID(userID) {
+      //console.log(userID);
+      const q = query(collection(db, "users"), where("uid", "==", userID));
+
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        //console.log(doc.id, " => ", doc.data());
+        const tempUser = {
+          username: doc.data().username,
+          phone_number: doc.data().phone_number,
+          email: doc.data().email,
+        };
+        usr.value = tempUser;
+      });
+    }
 
     return {
-      user_email,
-      number,
-      uid,
+      getUserUID,
+      usr,
+      userUID,
     };
   },
 };
@@ -48,29 +64,32 @@ export default {
       >
         Settings
       </button>
-      <div class="flex flex-col bg-[#4DEC9A] p-4 mt-2 rounded-md pr-14">
+      <form class="flex flex-col bg-[#4DEC9A] p-4 mt-2 rounded-md pr-6 mx-auto">
         <div class="flex flex-row items-center">
           <img
-            src="/img/userprofile.jpeg"
-            class="rounded-full max-h-20 aspect-square"
+            src="/img/profile.jpg"
+            class="rounded-full max-h-20 aspect-square mx-auto"
           />
-          <h1 class="font-medium text-2xl ml-2">@USERNAME</h1>
         </div>
-        <span class="font-normal text-base mt-2">Name</span>
-        <p class="font-medium text-xl">Your Name Here</p>
+        <span class="font-normal text-base mt-2">Username</span>
+        <p
+          class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
+        >
+          {{ usr.username }}
+        </p>
         <span class="font-normal text-base mt-2">Phone Number</span>
         <input
-          class="font-medium text-xl bg-transparent pointer-events-none"
+          class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
           type="text"
-          v-model="number"
+          v-model="usr.phone_number"
         />
         <span class="font-normal text-base mt-2">Email Address</span>
         <input
-          class="font-medium text-xl bg-transparent pointer-events-none"
+          class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
           type="text"
-          v-model="user_email"
+          v-model="usr.email"
         />
-      </div>
+      </form>
       <RouterLink to="/create-report" class="flex flex-col">
         <button class="rounded-full bg-[#00A651] h-10 m-3">
           Create New Report
