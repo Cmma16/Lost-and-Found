@@ -16,7 +16,7 @@ export default {
 </script>
 
 <template>
-  <body class="bg-cover bg-center bg-green-500">
+  <body>
     <RouterView />
   </body>
 </template>

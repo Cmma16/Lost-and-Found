@@ -55,14 +55,14 @@ export default {
 
 <template>
   <div
-    class="left-sidebar mt-14 sticky top-12 z-50 bg-white mx-1 max-h-[470px] hidden md:flex flex-col p-2 rounded-md shadow-sm"
+    class="left-sidebar mt-14 sticky top-12 z-20 bg-white mx-1 max-h-[470px] hidden md:flex flex-col p-2 rounded-md shadow-sm"
   >
     <div class="m-5 flex flex-col">
       <button
         class="material-symbols-outlined flex self-end"
         @click="$store.dispatch('logout')"
       >
-        Settings
+        logout
       </button>
       <form class="flex flex-col bg-[#4DEC9A] p-4 mt-2 rounded-md pr-6 mx-auto">
         <div class="flex flex-row items-center">
@@ -91,7 +91,7 @@ export default {
         />
       </form>
       <RouterLink to="/create-report" class="flex flex-col">
-        <button class="rounded-full bg-[#00A651] h-10 m-3">
+        <button class="rounded-full bg-[#00A651] h-10 m-3 active:scale-[0.9]">
           Create New Report
         </button>
       </RouterLink>

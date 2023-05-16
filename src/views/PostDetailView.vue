@@ -8,11 +8,9 @@
           class="flex flex-col bg-white min-h-screen sm:min-h-full shadow-lg"
         >
           <div class="bg-green-700 h-12 flex">
-            <p class="font-bold my-auto text-xl self-start ml-3">
-              Create Report
-            </p>
+            <p class="font-bold my-auto text-xl self-start ml-3">Edit Report</p>
           </div>
-          <form class="mx-8 flex flex-col h" @submit.prevent="createReport">
+          <form class="mx-8 flex flex-col h" @submit.prevent="updateReport">
             <span class="flex">
               <select
                 name=" optionlist "
@@ -58,7 +56,7 @@
               <div class="flex flex-col mr-1">
                 <p>Date</p>
                 <input
-                  type="text"
+                  type="date"
                   v-model="newReportDate"
                   placeholder="DD-MM-YYYY"
                   class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md placeholder:text-black"
@@ -68,7 +66,7 @@
               <div class="flex flex-col ml-1">
                 <p>Time</p>
                 <input
-                  type="text"
+                  type="time"
                   v-model="newReportTime"
                   placeholder="HH : MM"
                   class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md placeholder:text-black"
@@ -96,7 +94,7 @@
                 class="bg-green-800 text-white ml-2 px-2 rounded"
                 type="submit"
               >
-                Publish
+                Save
               </button>
             </div>
           </form>
@@ -106,27 +104,85 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { useRoute, useRouter } from "vue-router";
+import { storeKey, useStore } from "vuex";
+import { ref, onMounted } from "vue";
+import { db } from "@/firebase";
+import { doc, updateDoc, getDoc, collection } from "firebase/firestore";
+import { async } from "@firebase/util";
 
-const route = useRoute();
-const router = useRouter();
+export default {
+  setup() {
+    const route = useRoute();
+    const router = useRouter();
+    const store = useStore();
 
-const showPostId = () => {
-  alert(`The ID of this Post is: ${route.params.id}`);
-};
+    return {
+      store,
+    };
+  },
+  data() {
+    const newReportCategory = ref("");
+    const newReportHeader = ref("");
+    const newReportDate = ref("");
+    const newReportLocation = ref("");
+    const newReportInfo = ref("None");
+    const newReportTime = ref("");
+    const username = ref("");
 
-const goHomeIn3Seconds = () => {
-  setTimeout(() => {
-    router.push({ name: "home" });
-  }, 3000);
-};
-const goToFirstPost = () => {
-  router.push({
-    name: "postDetail",
-    params: {
-      id: "id1",
+    onMounted(async () => {
+      const docRef = doc(db, "reports", this.postId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        newReportCategory.value = docSnap.data().category;
+        newReportHeader.value = docSnap.data().header;
+        newReportLocation.value = docSnap.data().location;
+        newReportDate.value = docSnap.data().date;
+        newReportTime.value = docSnap.data().time;
+        newReportInfo.value = docSnap.data().more_info;
+      } else {
+        // doc.data() will be undefined in this case
+        console.log("No such document!");
+      }
+    });
+
+    const updateReport = async () => {
+      const reportRef = doc(db, "reports", this.postId);
+      await updateDoc(reportRef, {
+        category: newReportCategory.value,
+        date: newReportDate.value,
+        header: newReportHeader.value,
+        location: newReportLocation.value,
+        more_info: newReportInfo.value,
+        time: newReportTime.value,
+      });
+      this.$router.push({ path: "/posts" });
+      alert("Report updated successfully");
+    };
+
+    return {
+      updateReport,
+      newReportCategory,
+      newReportHeader,
+      newReportDate,
+      newReportLocation,
+      newReportInfo,
+      newReportTime,
+    };
+  },
+  computed: {
+    postId() {
+      return this.store.state.post_id;
     },
-  });
+  },
+  methods: {
+    usePostId() {
+      if (this.postId) {
+        console.log(`The post id is: ${this.postId}`);
+      }
+    },
+  },
 };
 </script>

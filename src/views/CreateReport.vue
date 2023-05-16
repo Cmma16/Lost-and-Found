@@ -6,9 +6,12 @@ import {
   getDocs,
   where,
   query,
+  snapshotEqual,
 } from "firebase/firestore";
 import { ref, onMounted } from "vue";
 import { db } from "@/firebase";
+import { getStorage, ref as stRef, uploadBytes } from "firebase/storage";
+import "firebase/storage";
 
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
@@ -18,12 +21,13 @@ export default {
   },
   data() {
     const auth = getAuth();
+    const storage = getStorage();
 
     const newReportCategory = ref("");
     const newReportHeader = ref("");
     const newReportDate = ref("");
     const newReportLocation = ref("");
-    const newReportInfo = ref("None");
+    const newReportInfo = ref("");
     const newReportTime = ref("");
     const username = ref("");
 
@@ -36,19 +40,24 @@ export default {
     });
 
     async function getUserUID(userID) {
-      console.log(userID);
+      //console.log(userID);
       const q = query(collection(db, "users"), where("uid", "==", userID));
 
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((doc) => {
-        console.log(doc.id, " => ", doc.data());
+        //console.log(doc.id, " => ", doc.data());
         const tempUsername = doc.data().username;
         username.value = tempUsername;
       });
     }
+    async function uploadImage(img) {
+      console.log(img.name);
+      const storageRef = stRef(storage, "postImages/" + img.name);
+      uploadBytes(storageRef, img).then((snapshot) => {});
+    }
 
     const createReport = () => {
-      addDoc(collection(db, "reports"), {
+      const docRef = addDoc(collection(db, "reports"), {
         category: newReportCategory.value,
         date: newReportDate.value,
         header: newReportHeader.value,
@@ -56,13 +65,20 @@ export default {
         more_info: newReportInfo.value,
         time: newReportTime.value,
         user: this.username,
+        timeCreated: this.currentTime,
+        dateCreated: this.currentDate,
+      }).then((docRef) => {
+        const uid = docRef.id;
+        //console.log("The UID of the created document is:", uid);
       });
       this.$router.push({ path: "/posts" });
       alert("Report published successfully");
     };
     return {
       createReport,
-      incomplete: true,
+      uploadImage,
+      imagePreview: null,
+      isOpen: false,
       newReportCategory,
       newReportHeader,
       newReportDate,
@@ -70,21 +86,32 @@ export default {
       newReportInfo,
       newReportTime,
       username,
+      storage,
+      img: null,
+      currentDate: new Date().toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }), // Get current date in "Month day, year" format
+      currentTime: new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+      }), // Get current time in "hour:minute:second" format
     };
   },
   components: {},
   methods: {
-    postReport() {
-      if (
-        newReportCategory &&
-        newReportDate &&
-        newReportHeader &&
-        newReportInfo &&
-        newReportLocation &&
-        newReportTime
-      ) {
-        this.incomplete = false;
-      } else this.incomplete = true;
+    toggleAddImageBtn() {
+      this.isOpen = !this.isOpen;
+    },
+    selectImage() {
+      this.$refs.fileInput.click();
+    },
+    handleUploadImage(event) {
+      const img = event.target.files[0];
+      this.imagePreview = URL.createObjectURL(img);
+      this.uploadImage(img);
     },
   },
 };
@@ -117,19 +144,30 @@ export default {
               </select>
             </span>
             <div class="flex flex-row mb-7">
-              <img src="/img/images.jpg" class="max-h-28 aspect-square" />
-              <div class="flex flex-col justify-items-end ml-3 pt-8">
+              <div
+                class="image-holder border-[1px] border-black aspect-square min-w-[112px] bg-cover bg-center flex flex-col justify-center relative"
+                @pointerenter="toggleAddImageBtn"
+                @pointerleave="toggleAddImageBtn"
+              >
+                <img
+                  v-if="imagePreview"
+                  :src="imagePreview"
+                  class="max-h-28 aspect-square object-cover"
+                />
                 <button
-                  class="bg-green-800 text-white mt-auto mb-0 px-2"
-                  @click=""
+                  v-if="isOpen"
+                  class="border-green-800 border-[1px] text-black py-[1px] px-3 rounded-full absolute self-center hover:bg-green-400"
+                  @click="selectImage"
+                  type="button"
                 >
                   Add Photo
                 </button>
-                <button
-                  class="border-green-800 border-[1px] text-black mt-auto mb-0 px-2"
-                >
-                  Remove Photo
-                </button>
+                <input
+                  type="file"
+                  ref="fileInput"
+                  @change="handleUploadImage"
+                  class="hidden"
+                />
               </div>
             </div>
             <input
@@ -150,20 +188,20 @@ export default {
               <div class="flex flex-col mr-1">
                 <p>Date</p>
                 <input
-                  type="text"
+                  type="date"
                   v-model="newReportDate"
-                  placeholder="DD-MM-YYYY"
-                  class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md placeholder:text-black"
+                  placeholder="<Month> <Day>, <Year>"
+                  class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md"
                   required
                 />
               </div>
-              <div class="flex flex-col ml-1">
+              <div class="flex flex-col ml-20">
                 <p>Time</p>
                 <input
-                  type="text"
+                  type="time"
                   v-model="newReportTime"
-                  placeholder="HH : MM"
-                  class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md placeholder:text-black"
+                  placeholder="HH:MM AM/PM"
+                  class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md"
                   required
                 />
               </div>
@@ -197,6 +235,12 @@ export default {
     </div>
   </div>
 </template>
+
+<style>
+.image-holder {
+  background-image: url("/img/empty.jpg");
+}
+</style>
 
 <!--<div class="posts">
     <h1>Posts</h1>

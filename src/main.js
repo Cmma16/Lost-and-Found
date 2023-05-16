@@ -18,9 +18,10 @@ import "./assets/main.css";
 
 const app = createApp(App);
 const auth = getAuth();
-const store = createStore({
+export const store = createStore({
   state: {
     user: null,
+    post_id: null,
   },
   mutations: {
     SET_USER(state, user) {
@@ -29,8 +30,14 @@ const store = createStore({
     CLEAR_USER(state, user) {
       state.user = null;
     },
+    SEND_POST_ID(state, post_id) {
+      state.post_id = post_id;
+    },
   },
   actions: {
+    updateData({ commit }, newData) {
+      commit("SEND_POST_ID", newData);
+    },
     async login({ commit }, details) {
       const { email, password } = details;
 
