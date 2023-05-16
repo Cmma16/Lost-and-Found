@@ -86,7 +86,6 @@ export const store = createStore({
         addDoc(collection(db, "users"), {
           uid: usr.uid,
           email: email,
-          phone_number: phone_number,
           username: username,
           password: password,
         });

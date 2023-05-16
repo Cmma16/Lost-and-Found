@@ -37,7 +37,6 @@ export default {
         //console.log(doc.id, " => ", doc.data());
         const tempUser = {
           username: doc.data().username,
-          phone_number: doc.data().phone_number,
           email: doc.data().email,
         };
         usr.value = tempUser;
@@ -77,12 +76,6 @@ export default {
         >
           {{ usr.username }}
         </p>
-        <span class="font-normal text-base mt-2">Phone Number</span>
-        <input
-          class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
-          type="text"
-          v-model="usr.phone_number"
-        />
         <span class="font-normal text-base mt-2">Email Address</span>
         <input
           class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"

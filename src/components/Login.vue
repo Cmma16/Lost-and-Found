@@ -11,7 +11,6 @@ export default {
     const emailR = ref("");
     const passwordR = ref("");
     const username = ref("");
-    const phone_number = ref("");
 
     const login = () => {
       store.dispatch("login", {
@@ -24,7 +23,6 @@ export default {
       store.dispatch("register", {
         email: emailR.value,
         password: passwordR.value,
-        phone_number: phone_number.value,
         username: username.value,
       });
     };
@@ -35,7 +33,6 @@ export default {
       emailR,
       passwordR,
       username,
-      phone_number,
       login,
       register,
     };
@@ -70,49 +67,6 @@ export default {
       <div
         class="mx-auto flex flex-row justify-center bg-white h-[82vh] md:h-screen rounded-tr-[100px] w-full"
       >
-        <section class="hidden bg-black bg-cover py-8 px-7 rounded-lg">
-          <h1 class="text-white my-2 font-bold text-2xl">Register</h1>
-          <form class="flex flex-col" @submit.prevent="register">
-            <input
-              type="email"
-              v-model="emailR"
-              placeholder="Email address"
-              class="focus:outline-none my-3 border-b-[1px] bg-transparent border-white text-white text-center placeholder:text-white placeholder:text-center placeholder:font-medium focus:text-white focus:text-center focus:font-medium"
-              required
-            />
-            <input
-              type="text"
-              v-model="username"
-              placeholder="Username"
-              class="focus:outline-none my-3 border-b-[1px] bg-transparent border-white text-white text-center placeholder:text-white placeholder:text-center placeholder:font-medium focus:text-white focus:text-center focus:font-medium w-64"
-              required
-            />
-            <input
-              type="tel"
-              v-model="phone_number"
-              placeholder="Phone Number"
-              class="focus:outline-none my-3 border-b-[1px] bg-transparent border-white text-white text-center placeholder:text-white placeholder:text-center placeholder:font-medium focus:text-white focus:text-center focus:font-medium"
-              required
-            />
-            <input
-              type="text"
-              v-model="passwordR"
-              placeholder="Password"
-              class="focus:outline-none my-3 border-b-[1px] bg-transparent border-white text-white text-center placeholder:text-white placeholder:text-center placeholder:font-medium focus:text-white focus:text-center focus:font-medium w-64"
-              required
-            />
-            <button
-              type="submit"
-              class="bg-green-700 rounded-full h-9 mt-4 text-white"
-            >
-              Register
-            </button>
-            <div class="hidden flex-row">
-              <p>Do not have an account?</p>
-              <button class="ml-2">Sign Up</button>
-            </div>
-          </form>
-        </section>
         <section>
           <div class="main max-h-screen">
             <input type="checkbox" id="chk" aria-hidden="true" />
@@ -155,25 +109,28 @@ export default {
 
             <div class="register">
               <span class="lab self-center text-dec" id="border_text">or</span>
-              <form class="form">
+              <form class="form" @submit.prevent="register">
                 <label class="lab" for="chk" aria-hidden="true">Register</label>
                 <input
                   class="input"
                   type="text"
+                  v-model="username"
                   name="txt"
                   placeholder="Username"
-                  required=""
+                  required
                 />
                 <input
                   class="input"
                   type="email"
+                  v-model="emailR"
                   name="email"
                   placeholder="Email"
-                  required=""
+                  required
                 />
                 <input
                   class="input"
-                  type="password"
+                  type="text"
+                  v-model="passwordR"
                   name="pswd"
                   placeholder="Password"
                   required=""

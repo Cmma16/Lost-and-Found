@@ -118,7 +118,6 @@ export default {
         //console.log(doc.id, " => ", doc.data());
         const tempUser = {
           username: doc.data().username,
-          phone_number: doc.data().phone_number,
           email: doc.data().email,
         };
         usr.value = tempUser;
@@ -201,52 +200,22 @@ export default {
 
 <template>
   <div class="body flex flex-col justify-center">
-    <nav class="menu sticky top-0 z-50 bg-[#003300] mb-2 shadow-md">
-      <ul class="flex flex-row items-stretch justify-between">
-        <li class="mx-1 my-2 px-1 rounded-full sm:block hidden">
+    <nav class="menu sticky top-0 z-50 bg-[#003300] mb-0 shadow-md">
+      <ul class="flex flex-row justify-between">
+        <li class="ml-9 my-2 px-1 sm:block hidden">
           <button
             class="flex justify-items-center text-white px-2 py-1 rounded-full active:scale-[0.9]"
             @click="
               displayAll();
               activeTab = 'allTab';
             "
-            :class="{ 'bg-green-500': activeTab === 'allTab' }"
+            :class="{ '': activeTab === 'allTab' }"
           >
             <span class="material-symbols-outlined text-white"> menu </span>
-            All
           </button>
         </li>
-        <li
-          class="mx-1 my-2 px-1 rounded-full sm:block hidden active:scale-[0.9]"
-        >
-          <button
-            class="flex justify-items-center px-2 py-1 text-white rounded-full"
-            @click="
-              lostOnly();
-              activeTab = 'lostTab';
-            "
-            :class="{ 'bg-green-500': activeTab === 'lostTab' }"
-          >
-            <span class="material-symbols-outlined text-white">
-              help_center
-            </span>
-            Lost
-          </button>
-        </li>
-        <li class="mx-1 my-2 px-1 rounded-full sm:block hidden">
-          <button
-            class="flex justify-items-center px-2 py-1 text-white rounded-full active:scale-[0.9]"
-            @click="
-              foundOnly();
-              activeTab = 'foundTab';
-            "
-            :class="{ 'bg-green-500': activeTab === 'foundTab' }"
-          >
-            <span class="material-symbols-outlined text-white">
-              search_check
-            </span>
-            Found
-          </button>
+        <li class="ml-20 my-2 px-1">
+          <span class="text-white font-bold">FoundIt!</span>
         </li>
         <li class="mx-1 flex items-stretch">
           <div
@@ -256,7 +225,7 @@ export default {
               type="text"
               placeholder="Search"
               v-model="search"
-              class="bg-[#4DEC9A] placeholder:text-white ml-3 focus:outline-none max-w-[320px]"
+              class="bg-[#4DEC9A] placeholder:text-white ml-3 focus:outline-none max-w-[420px]"
             />
             <button
               @click="searchReports"
@@ -265,6 +234,11 @@ export default {
               search
             </button>
           </div>
+        </li>
+        <li class="mx-1 my-2 pr-1 rounded-full">
+          <span class="text-white">
+            {{ currentUser }}
+          </span>
         </li>
         <li class="mx-1 my-2 pr-1 rounded-full">
           <button
@@ -276,107 +250,152 @@ export default {
         </li>
       </ul>
     </nav>
-    <div class="self-center flex flex-row flex-wrap">
+    <div class="flex flex-row">
       <div
-        v-for="report in reports"
-        :key="report.post_id"
-        class="postcard mb-1 flex shrink flex-col py-6 mx-1 bg-white min-w-[390px] shadow-xl"
+        class="categories flex sticky top-12 z-40 w-[285px] min-w-[285px] h-screen bg-gray-600 flex-col"
       >
+        <ul class="flex flex-col grow">
+          <li class="my-2">
+            <button
+              class="flex w-[285px] text-white py-1 active:scale-[0.9]"
+              @click="
+                displayAll();
+                activeTab = 'allTab';
+              "
+              :class="{ 'bg-green-500': activeTab === 'allTab' }"
+            >
+              <span class="material-symbols-outlined text-white"> apps </span>
+              All
+            </button>
+          </li>
+          <li class="my-2">
+            <button
+              class="flex w-[285px] py-1 text-white active:scale-[0.9]"
+              @click="
+                lostOnly();
+                activeTab = 'lostTab';
+              "
+              :class="{ 'bg-green-500': activeTab === 'lostTab' }"
+            >
+              <span class="material-symbols-outlined text-white">
+                help_center
+              </span>
+              Lost
+            </button>
+          </li>
+          <li class="my-2 pl-9">
+            <button
+              class="flex justify-items-center px-2 py-1 text-white active:scale-[0.9]"
+              @click="
+                foundOnly();
+                activeTab = 'foundTab';
+              "
+              :class="{ 'bg-green-500': activeTab === 'foundTab' }"
+            >
+              <span class="material-symbols-outlined text-white">
+                search_check
+              </span>
+              Found
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="flex flex-row flex-wrap">
         <div
-          class="card-image flex justify-center bg-black top-0 bottom-0 left-0 right-0 absolute"
+          v-for="report in reports"
+          :key="report.post_id"
+          class="postcard mb-1 flex shrink flex-col py-6 mx-1 bg-white min-w-[390px] shadow-xl"
         >
-          <img src="/img/images.jpg" class="max-w-full h-auto" />
-        </div>
-        <div class="post-description">
-          <div class="flex justify-between px-4">
-            <p class="font-bold">{{ report.category }}</p>
-            <p class="text-gray-600 font-bold">Today, 4hrs ago</p>
+          <div
+            class="card-image flex justify-center bg-black top-0 bottom-0 left-0 right-0 absolute"
+          >
+            <img src="/img/images.jpg" class="max-w-full h-auto" />
           </div>
-          <div class="flex sm:flex-col justify-between px-4">
-            <div class="flex flex-col m-1">
-              <p class="text-2xl font-bold">{{ report.header }}</p>
-              <p>Location: {{ report.location }}</p>
-              <p>Date: {{ report.date }}</p>
-              <p>Time: {{ report.time }}</p>
+          <div class="post-description">
+            <div class="flex justify-between px-4">
+              <p class="font-bold">{{ report.category }}</p>
+              <p class="text-gray-600 font-bold">Today, 4hrs ago</p>
             </div>
-          </div>
-          <div class="border-2 border-green-600 w-200 py-1 rounded mx-4 mt-2">
-            <h1 class="font-bold m-2">Additional information:</h1>
-            <p class="m-2">
-              {{ report.more_info }}
-            </p>
-          </div>
-          <div class="flex justify-between mt-2">
-            <div class="flex">
-              <img src="" class="h-7 w-7 rounded-full mr-1" />
-              <button @click="toggleUserInfo(report)">
-                {{ report.user }}
-              </button>
-              <div
-                v-if="showModal"
-                class="fixed top-0 left-0 right-0 bottom-0 z-50 bg-black opacity-50"
-              >
-                <div
-                  class="bg-white p-6 rounded max-w-sm mx-auto mt-16 flex flex-col"
-                >
-                  <div class="flex flex-col">
-                    <span class="font-normal text-base mt-2">Username</span>
-                    <p
-                      class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
-                    >
-                      {{ usr.username }}
-                    </p>
-                    <span class="font-normal text-base mt-2">Phone Number</span>
-                    <input
-                      class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
-                      type="text"
-                      v-model="usr.phone_number"
-                    />
-                    <span class="font-normal text-base mt-2"
-                      >Email Address</span
-                    >
-                    <input
-                      class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
-                      type="text"
-                      v-model="usr.email"
-                    />
-                  </div>
-                  <button
-                    @click="toggleUserInfo(report)"
-                    class="bg-red-500 p-2 text-white rounded"
-                  >
-                    Close
-                  </button>
-                </div>
+            <div class="flex sm:flex-col justify-between px-4">
+              <div class="flex flex-col m-1">
+                <p class="text-2xl font-bold">{{ report.header }}</p>
+                <p>Location: {{ report.location }}</p>
+                <p>Date: {{ report.date }}</p>
+                <p>Time: {{ report.time }}</p>
               </div>
             </div>
-            <div
-              class="flex rounded-full hover:bg-[#4DEC9A]"
-              :class="{ 'border-[1px]': isCurrentUser(report.user) }"
-            >
-              <button
-                v-if="isCurrentUser(report.user)"
-                class="rounded-full px-[1.5px] flex justify-items-center hover:bg-green-500 z-10 transition-all duration-500 ease-in-out"
-                @pointerenter="toggleDropdown(report)"
-                :class="{ 'bg-green-500': report.isOpen }"
-              >
-                <span class="material-symbols-outlined"> more_horiz </span>
-              </button>
-              <transition name="fade">
+            <div class="border-2 border-green-600 w-200 py-1 rounded mx-4 mt-2">
+              <h1 class="font-bold m-2">Additional information:</h1>
+              <p class="m-2">
+                {{ report.more_info.substring(0, 30) + "..." }}
+              </p>
+            </div>
+            <div class="flex justify-between mt-2">
+              <div class="flex">
+                <img src="" class="h-7 w-7 rounded-full mr-1" />
+                <button @click="toggleUserInfo(report)">
+                  {{ report.user }}
+                </button>
                 <div
-                  v-if="report.isOpen"
-                  @pointerleave="toggleDropdown(report)"
-                  class=""
+                  v-if="showModal"
+                  class="fixed top-0 left-0 right-0 bottom-0 z-50 bg-black opacity-50"
                 >
-                  <button
-                    v-for="item in items"
-                    @click="executeAction(item.action, report.post_id)"
-                    class="mx-1 hover:bg-green-500 rounded-full px-2"
+                  <div
+                    class="bg-white p-6 rounded max-w-sm mx-auto mt-16 flex flex-col"
                   >
-                    {{ item.label }}
-                  </button>
+                    <div class="flex flex-col">
+                      <span class="font-normal text-base mt-2">Username</span>
+                      <p
+                        class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
+                      >
+                        {{ usr.username }}
+                      </p>
+                      <span class="font-normal text-base mt-2"
+                        >Email Address</span
+                      >
+                      <input
+                        class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
+                        type="text"
+                        v-model="usr.email"
+                      />
+                    </div>
+                    <button
+                      @click="toggleUserInfo(report)"
+                      class="bg-red-500 p-2 text-white rounded"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
-              </transition>
+              </div>
+              <div
+                class="flex rounded-full hover:bg-[#4DEC9A]"
+                :class="{ 'border-[1px]': isCurrentUser(report.user) }"
+              >
+                <button
+                  v-if="isCurrentUser(report.user)"
+                  class="rounded-full px-[1.5px] flex justify-items-center hover:bg-green-500 z-10 transition-all duration-500 ease-in-out"
+                  @pointerenter="toggleDropdown(report)"
+                  :class="{ 'bg-green-500': report.isOpen }"
+                >
+                  <span class="material-symbols-outlined"> more_horiz </span>
+                </button>
+                <transition name="fade">
+                  <div
+                    v-if="report.isOpen"
+                    @pointerleave="toggleDropdown(report)"
+                    class=""
+                  >
+                    <button
+                      v-for="item in items"
+                      @click="executeAction(item.action, report.post_id)"
+                      class="mx-1 hover:bg-green-500 rounded-full px-2"
+                    >
+                      {{ item.label }}
+                    </button>
+                  </div>
+                </transition>
+              </div>
             </div>
           </div>
         </div>
@@ -413,7 +432,7 @@ export default {
   height: auto;
   width: 100%;
   bottom: 0;
-  transition: all 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+  transition: all 0.5s cubic-bezier(0.645, 0.045, 0.355, 1);
   padding: 1rem;
 }
 
