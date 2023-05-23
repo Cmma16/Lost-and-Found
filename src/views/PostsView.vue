@@ -50,7 +50,7 @@ export default {
           more_info: doc.data().more_info,
           user: doc.data().user,
           dateCreated: doc.data().dateCreated,
-          timeCreated: doc.data().dateCreated,
+          timeCreated: doc.data().timeCreated,
           isOpen: false,
           showModal: false,
         };
@@ -91,6 +91,32 @@ export default {
     }
     function displayAll() {
       reports.value = fbReports;
+    }
+    function calculateTimeElapsed(dateCreated, timeCreated) {
+      var timeNow = new Date();
+      var dateTime = dateCreated + " " + timeCreated;
+      var date = new Date(dateTime);
+      var timeElapsed = timeNow - date;
+      timeElapsed = timeElapsed / 1000;
+      var unitDisc = " second(s) ago";
+      var timePassed = Math.floor(timeElapsed);
+      if (timeElapsed > 60 && timeElapsed < 3600) {
+        timePassed = Math.floor(timeElapsed / 60);
+        if (Math.floor(timeElapsed / 60) > 1) unitDisc = " mins ago";
+        else unitDisc = " min ago";
+      } else if (timeElapsed > 3600 && timeElapsed < 86400) {
+        timePassed = Math.floor(timeElapsed / 3600);
+        if (Math.floor(timeElapsed / 3600) > 1) unitDisc = " hrs ago";
+        else unitDisc = " hr ago";
+      } else if (timeElapsed > 86400 && timeElapsed < 604800) {
+        timePassed = Math.floor(timeElapsed / 86400);
+        if (Math.floor(timeElapsed / 86400) > 1) unitDisc = " days ago";
+        else unitDisc = " day ago";
+      } else {
+        timePassed = dateCreated;
+        unitDisc = "";
+      }
+      return timePassed + unitDisc;
     }
 
     async function deleteReport(id) {
@@ -142,6 +168,7 @@ export default {
       deleteReport,
       lostOnly,
       foundOnly,
+      calculateTimeElapsed,
       displayAll,
       activeTab,
       isOpen: false,
@@ -200,7 +227,7 @@ export default {
 
 <template>
   <div class="body flex flex-col justify-center">
-    <nav class="menu sticky top-0 z-50 bg-[#003300] mb-0 shadow-md">
+    <nav class="menu sticky top-0 z-50 bg-[#003300] mb-0 shadow-md h-[50px]">
       <ul class="flex flex-row justify-between">
         <li class="ml-9 my-2 px-1 sm:block hidden">
           <button
@@ -214,8 +241,8 @@ export default {
             <span class="material-symbols-outlined text-white"> menu </span>
           </button>
         </li>
-        <li class="ml-20 my-2 px-1">
-          <span class="text-white font-bold">FoundIt!</span>
+        <li class="my-2 px-1">
+          <span class="text-white font-bold text-2xl">FoundIt!</span>
         </li>
         <li class="mx-1 flex items-stretch">
           <div
@@ -252,51 +279,62 @@ export default {
     </nav>
     <div class="flex flex-row">
       <div
-        class="categories flex sticky top-12 z-40 w-[285px] min-w-[285px] h-screen bg-gray-600 flex-col"
+        class="categories flex sticky top-[50px] z-40 w-[285px] min-w-[285px] bg-[#d9d9d9] flex-col"
       >
         <ul class="flex flex-col grow">
           <li class="my-2">
             <button
-              class="flex w-[285px] text-white py-1 active:scale-[0.9]"
+              class="flex w-[285px] font-black pl-9 py-1 active:scale-[0.99]"
               @click="
                 displayAll();
                 activeTab = 'allTab';
               "
               :class="{ 'bg-green-500': activeTab === 'allTab' }"
             >
-              <span class="material-symbols-outlined text-white"> apps </span>
-              All
+              <span class="material-symbols-outlined mr-5 font-bold">
+                apps
+              </span>
+              All Posts
             </button>
           </li>
           <li class="my-2">
             <button
-              class="flex w-[285px] py-1 text-white active:scale-[0.9]"
+              class="flex w-[285px] font-black pl-9 py-1 active:scale-[0.99]"
               @click="
                 lostOnly();
                 activeTab = 'lostTab';
               "
               :class="{ 'bg-green-500': activeTab === 'lostTab' }"
             >
-              <span class="material-symbols-outlined text-white">
-                help_center
+              <span class="material-symbols-outlined mr-5 font-bold">
+                conditions
               </span>
-              Lost
+              Lost Category
             </button>
           </li>
-          <li class="my-2 pl-9">
+          <li class="my-2">
             <button
-              class="flex justify-items-center px-2 py-1 text-white active:scale-[0.9]"
+              class="flex w-[285px] font-black pl-9 py-1 active:scale-[0.99]"
               @click="
                 foundOnly();
                 activeTab = 'foundTab';
               "
               :class="{ 'bg-green-500': activeTab === 'foundTab' }"
             >
-              <span class="material-symbols-outlined text-white">
+              <span class="material-symbols-outlined mr-5 font-bold">
                 search_check
               </span>
-              Found
+              Found Category
             </button>
+          </li>
+          <li class="my-2">
+            <RouterLink to="/create-report" class="flex flex-col">
+              <button
+                class="rounded-full bg-[#00A651] h-10 m-3 active:scale-[0.9]"
+              >
+                Create New Report
+              </button>
+            </RouterLink>
           </li>
         </ul>
       </div>
@@ -304,7 +342,7 @@ export default {
         <div
           v-for="report in reports"
           :key="report.post_id"
-          class="postcard mb-1 flex shrink flex-col py-6 mx-1 bg-white min-w-[390px] shadow-xl"
+          class="postcard mb-1 flex shrink flex-col py-6 mx-1 bg-white w-[290px] shadow-xl"
         >
           <div
             class="card-image flex justify-center bg-black top-0 bottom-0 left-0 right-0 absolute"
@@ -314,7 +352,11 @@ export default {
           <div class="post-description">
             <div class="flex justify-between px-4">
               <p class="font-bold">{{ report.category }}</p>
-              <p class="text-gray-600 font-bold">Today, 4hrs ago</p>
+              <p class="text-gray-600 font-bold">
+                {{
+                  calculateTimeElapsed(report.dateCreated, report.timeCreated)
+                }}
+              </p>
             </div>
             <div class="flex sm:flex-col justify-between px-4">
               <div class="flex flex-col m-1">
@@ -457,6 +499,10 @@ export default {
   color: transparent;
   background-clip: text;
   -webkit-background-clip: text;
+}
+
+.categories {
+  height: calc(100vh - 50px);
 }
 
 @keyframes animateBackground {
