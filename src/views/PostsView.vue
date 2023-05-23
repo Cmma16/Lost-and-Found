@@ -266,6 +266,13 @@ export default {
           <span class="text-white">
             {{ currentUser }}
           </span>
+          <span>
+            <select class="dropdown-button">
+              <option value="">Profile</option>
+              <option value="">Messages</option>
+              <option value="">Logout</option>
+            </select>
+          </span>
         </li>
         <li class="mx-1 my-2 pr-1 rounded-full">
           <button
@@ -342,7 +349,7 @@ export default {
         <div
           v-for="report in reports"
           :key="report.post_id"
-          class="postcard mb-1 flex shrink flex-col py-6 mx-1 bg-white w-[290px] shadow-xl"
+          class="postcard mb-1 flex grow shrink flex-col py-6 mx-1 bg-white w-[390px] max-w-lg shadow-xl"
         >
           <div
             class="card-image flex justify-center bg-black top-0 bottom-0 left-0 right-0 absolute"
@@ -455,6 +462,18 @@ export default {
 <style>
 * {
   scroll-behavior: smooth;
+}
+
+.dropdown-button {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 100px; /* Adjust the width as needed */
+  height: 30px; /* Adjust the height as needed */
 }
 
 .postcard {

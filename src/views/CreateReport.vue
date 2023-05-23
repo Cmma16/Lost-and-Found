@@ -23,7 +23,7 @@ export default {
     const auth = getAuth();
     const storage = getStorage();
 
-    const newReportCategory = ref("");
+    const newReportCategory = ref("Lost");
     const newReportHeader = ref("");
     const newReportDate = ref("");
     const newReportLocation = ref("");
