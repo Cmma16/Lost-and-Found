@@ -9,11 +9,31 @@ import {
   doc,
 } from "firebase/firestore";
 import { db } from "@/firebase";
+import {
+  getStorage,
+  ref as stRef,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 import Posts from "../components/Posts.vue";
 import SideBar from "../components/SideBar.vue";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import router from "../router";
 import { useStore } from "vuex";
+import {
+  initAccordions,
+  initCarousels,
+  initCollapses,
+  initDials,
+  initDismisses,
+  initDrawers,
+  initDropdowns,
+  initModals,
+  initPopovers,
+  initTabs,
+  initTooltips,
+} from "flowbite";
+import { async } from "@firebase/util";
 
 export default {
   setup() {
@@ -25,6 +45,7 @@ export default {
   },
   data() {
     const auth = getAuth();
+    const storage = getStorage();
     const reports = ref([]);
     const search = ref("");
     let fbReports = [];
@@ -33,13 +54,15 @@ export default {
     const currentUser = ref("");
 
     onMounted(async () => {
+      const storage = getStorage();
       // Simulate loading data
       setTimeout(() => {
         // Once loading is complete, set isLoading to false
         this.isLoading = false;
       }, 3000); // Delay for 2 seconds
       const querySnapshot = await getDocs(collection(db, "reports"));
-      querySnapshot.forEach((doc) => {
+      for (const doc of querySnapshot.docs) {
+        const url = await getImgURL(doc.data().imagePath);
         const report = {
           post_id: doc.id,
           category: doc.data().category,
@@ -51,17 +74,33 @@ export default {
           user: doc.data().user,
           dateCreated: doc.data().dateCreated,
           timeCreated: doc.data().timeCreated,
+          imageURL: url,
           isOpen: false,
+          showFullDescription: false,
+          needsTruncation: false,
           showModal: false,
         };
+        console.log(report.imageURL);
         fbReports.push(report);
-      });
+      }
       reports.value = fbReports;
       onAuthStateChanged(auth, (user) => {
         if (user) {
           getCurrentUser(user.uid);
         }
       });
+
+      initAccordions();
+      initCarousels();
+      initCollapses();
+      initDials();
+      initDismisses();
+      initDrawers();
+      initDropdowns();
+      initModals();
+      initPopovers();
+      initTabs();
+      initTooltips();
     });
     function searchReports() {
       //incomplete
@@ -132,6 +171,10 @@ export default {
         currentUser.value = doc.data().username;
       });
     }
+    async function getImgURL(imagePath) {
+      const imageURL = await getDownloadURL(stRef(storage, imagePath));
+      return imageURL;
+    }
 
     async function getUserInfo(userName) {
       //console.log(userID);
@@ -156,10 +199,15 @@ export default {
       usr,
       currentUser,
 
+      regex: /[\n\r]/,
+
       postID: null,
       showModal: false,
 
       isLoading: true,
+
+      showFullDescription: false,
+      maxDescriptionLength: 30,
 
       getUserInfo,
       getCurrentUser,
@@ -173,6 +221,15 @@ export default {
       activeTab,
       isOpen: false,
       items: [
+        {
+          label: "Resolve",
+          action: async (id) => {
+            reports.value = reports.value.filter(
+              (report) => report.post_id !== id
+            );
+            await deleteDoc(doc(db, "reports", id));
+          },
+        },
         {
           label: "Delete",
           action: async (id) => {
@@ -192,18 +249,16 @@ export default {
       ],
     };
   },
-  mounted() {},
+  computed: {},
   components: {
     Posts,
     SideBar,
   },
   methods: {
     toggleDropdown(report) {
-      //this.isOpen = !this.isOpen;
       const index = this.reports.indexOf(report);
       const value = this.reports[index].isOpen;
       this.reports[index].isOpen = !value;
-      //console.log(value);
     },
     toggleUserInfo(report) {
       const index = this.reports.indexOf(report);
@@ -220,6 +275,31 @@ export default {
     isCurrentUser(user) {
       if (user === this.currentUser) return true;
       else return false;
+    },
+    truncateMoreInfo(report) {
+      const index = this.reports.indexOf(report);
+      const value = this.reports[index].showFullDescription;
+
+      this.reports[index].needsTruncation = !value;
+      this.reports[index].showFullDescription = !value;
+    },
+    truncatedMoreInfo(report) {
+      const disc = report.more_info;
+      const containsLineBreaks = this.regex.test(disc);
+
+      if (containsLineBreaks && !report.needsTruncation) {
+        const index = disc.indexOf("\n");
+        if (index !== -1) {
+          return disc.slice(0, index);
+        }
+      } else if (
+        disc.length > this.maxDescriptionLength &&
+        !report.showFullDescription
+      ) {
+        return `${disc.slice(0, this.maxDescriptionLength)}...`;
+      } else {
+        return disc;
+      }
     },
   },
 };
@@ -241,18 +321,21 @@ export default {
             <span class="material-symbols-outlined text-white"> menu </span>
           </button>
         </li>
-        <li class="my-2 px-1">
-          <span class="text-white font-bold text-2xl">FoundIt!</span>
+        <li class="flex flex-row my-2 px-1 max-h-10">
+          <img class="max-h-10" src="/img/foundIt icon.png" />
+          <span class="text-white font-bold font-sans text-2xl max-h-10"
+            >FoundIt!</span
+          >
         </li>
         <li class="mx-1 flex items-stretch">
           <div
-            class="bg-[#4DEC9A] flex flex-row justify-items-center my-1 py-1 w-lg rounded-full"
+            class="bg-[#4DEC9A] flex flex-row justify-items-center my-1 max-h-9 py-1 w-lg rounded-full"
           >
             <input
               type="text"
               placeholder="Search"
               v-model="search"
-              class="bg-[#4DEC9A] placeholder:text-white ml-3 focus:outline-none max-w-[420px]"
+              class="bg-[#4DEC9A] placeholder:text-white max-h-8 border-0 ml-3 focus:border-none max-w-[420px]"
             />
             <button
               @click="searchReports"
@@ -262,25 +345,71 @@ export default {
             </button>
           </div>
         </li>
-        <li class="mx-1 my-2 pr-1 rounded-full">
-          <span class="text-white">
-            {{ currentUser }}
-          </span>
-          <span>
-            <select class="dropdown-button">
-              <option value="">Profile</option>
-              <option value="">Messages</option>
-              <option value="">Logout</option>
-            </select>
-          </span>
-        </li>
-        <li class="mx-1 my-2 pr-1 rounded-full">
+        <li class="mx-1 my-2 pr-10 rounded-full">
           <button
-            class="material-symbols-outlined flex self-end text-white"
-            @click="$store.dispatch('logout')"
+            id="dropdownDividerButton"
+            data-dropdown-toggle="dropdownDivider"
+            class="text-white focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            type="button"
           >
-            logout
+            {{ currentUser }}
+            <svg
+              class="w-4 h-4 ml-2"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
           </button>
+
+          <!-- Dropdown menu -->
+          <div
+            id="dropdownDivider"
+            class="z-50 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
+          >
+            <ul
+              class="py-2 text-sm text-gray-700 dark:text-gray-200"
+              aria-labelledby="dropdownDividerButton"
+            >
+              <li>
+                <a
+                  href="#"
+                  class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                  >Profile</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                  >Messages</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                  >Settings</a
+                >
+              </li>
+            </ul>
+            <div class="py-2">
+              <a
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                @click="$store.dispatch('logout')"
+                >Logout</a
+              >
+            </div>
+          </div>
         </li>
       </ul>
     </nav>
@@ -354,7 +483,11 @@ export default {
           <div
             class="card-image flex justify-center bg-black top-0 bottom-0 left-0 right-0 absolute"
           >
-            <img src="/img/images.jpg" class="max-w-full h-auto" />
+            <img
+              :src="report.imageURL"
+              src="/img/empty.jpg"
+              class="max-w-full h-auto"
+            />
           </div>
           <div class="post-description">
             <div class="flex justify-between px-4">
@@ -375,8 +508,33 @@ export default {
             </div>
             <div class="border-2 border-green-600 w-200 py-1 rounded mx-4 mt-2">
               <h1 class="font-bold m-2">Additional information:</h1>
-              <p class="m-2">
-                {{ report.more_info.substring(0, 30) + "..." }}
+              <p
+                :class="{
+                  'description-truncated': !showFullDescription,
+                  'm-2': true,
+                }"
+                class="whitespace-pre-wrap"
+              >
+                {{ truncatedMoreInfo(report) }}
+                <button
+                  class="truncate-button"
+                  v-if="
+                    (!report.showFullDescription &&
+                      report.more_info.length > 30) ||
+                    (this.regex.test(report.more_info) &&
+                      !report.needsTruncation)
+                  "
+                  @click="truncateMoreInfo(report)"
+                >
+                  See more
+                </button>
+                <button
+                  class="truncate-button"
+                  v-if="report.showFullDescription && report.needsTruncation"
+                  @click="truncateMoreInfo(report)"
+                >
+                  See less
+                </button>
               </p>
             </div>
             <div class="flex justify-between mt-2">
@@ -423,18 +581,14 @@ export default {
               >
                 <button
                   v-if="isCurrentUser(report.user)"
-                  class="rounded-full px-[1.5px] flex justify-items-center hover:bg-green-500 z-10 transition-all duration-500 ease-in-out"
-                  @pointerenter="toggleDropdown(report)"
+                  class="rounded-full px-[1.5px] flex justify-items-center hover:bg-green-500 transition-all duration-500 ease-in-out"
+                  @click="toggleDropdown(report)"
                   :class="{ 'bg-green-500': report.isOpen }"
                 >
                   <span class="material-symbols-outlined"> more_horiz </span>
                 </button>
                 <transition name="fade">
-                  <div
-                    v-if="report.isOpen"
-                    @pointerleave="toggleDropdown(report)"
-                    class=""
-                  >
+                  <div v-if="report.isOpen" class="">
                     <button
                       v-for="item in items"
                       @click="executeAction(item.action, report.post_id)"
@@ -522,6 +676,10 @@ export default {
 
 .categories {
   height: calc(100vh - 50px);
+}
+
+.truncate-button {
+  font-weight: 600;
 }
 
 @keyframes animateBackground {

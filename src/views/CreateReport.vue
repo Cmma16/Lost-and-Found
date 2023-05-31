@@ -10,7 +10,12 @@ import {
 } from "firebase/firestore";
 import { ref, onMounted } from "vue";
 import { db } from "@/firebase";
-import { getStorage, ref as stRef, uploadBytes } from "firebase/storage";
+import {
+  getStorage,
+  ref as stRef,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 import "firebase/storage";
 
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -30,6 +35,7 @@ export default {
     const newReportInfo = ref("");
     const newReportTime = ref("");
     const username = ref("");
+    const imgPath = ref("");
 
     onMounted(async () => {
       onAuthStateChanged(auth, (user) => {
@@ -53,7 +59,8 @@ export default {
     async function uploadImage(img) {
       console.log(img.name);
       const storageRef = stRef(storage, "postImages/" + img.name);
-      uploadBytes(storageRef, img).then((snapshot) => {});
+      const taskUpload = uploadBytes(storageRef, img);
+      return storageRef.fullPath;
     }
 
     const createReport = () => {
@@ -67,6 +74,7 @@ export default {
         user: this.username,
         timeCreated: this.currentTime,
         dateCreated: this.currentDate,
+        imagePath: this.imgPath,
       }).then((docRef) => {
         const uid = docRef.id;
         //console.log("The UID of the created document is:", uid);
@@ -85,6 +93,7 @@ export default {
       newReportLocation,
       newReportInfo,
       newReportTime,
+      imgPath,
       username,
       storage,
       img: null,
@@ -111,7 +120,7 @@ export default {
     handleUploadImage(event) {
       const img = event.target.files[0];
       this.imagePreview = URL.createObjectURL(img);
-      this.uploadImage(img);
+      this.imagePath = this.uploadImage(img);
     },
   },
 };
