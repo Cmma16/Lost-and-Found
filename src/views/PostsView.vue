@@ -405,6 +405,33 @@ export default {
             </div>
           </div>
         </li>
+        <li>
+          <div class="flex justify-end px-4 pt-4">
+            <button
+              id="dropdownButton"
+              data-dropdown-toggle="dropdown"
+              class="inline-block text-gray-500 dark:text-gray-400 hover:bg-green-400 rounded-full focus:outline-none focus:ring-gray-200 dark:focus:ring-gray-700 text-sm px-0.5 items-center"
+            >
+              <span class="material-symbols-outlined"> more_horiz </span>
+            </button>
+            <!-- Dropdown menu -->
+            <div
+              id="dropdown"
+              class="z-10 hidden text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700"
+            >
+              <ul class="py-2" aria-labelledby="dropdownButton">
+                <li v-for="item in items">
+                  <button
+                    @click="executeAction(item.action, report.post_id)"
+                    class="mx-1 hover:bg-green-500 rounded-full px-2"
+                  >
+                    {{ item.label }}
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </li>
       </ul>
     </nav>
     <div class="flex flex-row">
@@ -472,106 +499,96 @@ export default {
         <div
           v-for="report in reports"
           :key="report.post_id"
-          class="postcard mb-1 flex grow shrink flex-col mx-1 bg-white w-[390px] max-w-lg shadow-xl"
+          class="h-fit mb-1 flex grow rounded-lg shrink flex-col mx-1 bg-white w-[390px] max-w-lg shadow-xl"
         >
-          <div class="">
-            <a
-              href="#"
-              class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-            >
-              <img
-                class="object-cover h-auto w-1/3 rounded-none rounded-l-lg"
-                :src="!report.imageURL ? '/img/empty.jpg' : report.imageURL"
-                alt=""
-              />
-              <div class="flex flex-col p-4 w-2/3 leading-normal">
-                <div class="flex justify-between px-4 bg-gree">
-                  <p class="font-bold">{{ report.category }}</p>
-                  <p class="text-gray-600 font-bold">
-                    {{
-                      calculateTimeElapsed(
-                        report.dateCreated,
-                        report.timeCreated
-                      )
-                    }}
-                  </p>
-                </div>
-                <h5
-                  class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+          <div
+            class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+          >
+            <img
+              class="object-cover h-auto md:w-1/3 rounded-none rounded-l-lg"
+              :src="!report.imageURL ? '/img/empty.jpg' : report.imageURL"
+              alt=""
+            />
+            <div class="flex flex-col p-4 w-full md:w-2/3 leading-normal">
+              <div class="flex justify-between px-4 bg-gree">
+                <p class="font-bold">{{ report.category }}</p>
+                <div
+                  class="flex rounded-full hover:bg-[#4DEC9A]"
+                  :class="{ 'border-[1px]': isCurrentUser(report.user) }"
                 >
-                  {{ report.header }}
-                </h5>
-                <p>Location: {{ report.location }}</p>
-                <p>Date: {{ report.date }}</p>
-                <p>Time: {{ report.time }}</p>
-                <div class="flex justify-between mt-2">
-                  <div class="flex">
-                    <button @click="toggleUserInfo(report)">
-                      {{ report.user }}
-                    </button>
-                    <div
-                      v-if="showModal"
-                      class="fixed top-0 left-0 right-0 bottom-0 z-50 bg-black opacity-50"
-                    >
-                      <div
-                        class="bg-white p-6 rounded max-w-sm mx-auto mt-16 flex flex-col"
-                      >
-                        <div class="flex flex-col">
-                          <span class="font-normal text-base mt-2"
-                            >Username</span
-                          >
-                          <p
-                            class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
-                          >
-                            {{ usr.username }}
-                          </p>
-                          <span class="font-normal text-base mt-2"
-                            >Email Address</span
-                          >
-                          <input
-                            class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
-                            type="text"
-                            v-model="usr.email"
-                          />
-                        </div>
-                        <button
-                          @click="toggleUserInfo(report)"
-                          class="bg-red-500 p-2 text-white rounded"
-                        >
-                          Close
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    class="flex rounded-full hover:bg-[#4DEC9A]"
-                    :class="{ 'border-[1px]': isCurrentUser(report.user) }"
+                  <button
+                    v-if="isCurrentUser(report.user)"
+                    class="rounded-full px-[1.5px] flex justify-items-center hover:bg-green-500 transition-all duration-500 ease-in-out"
+                    @click="toggleDropdown(report)"
+                    :class="{ 'bg-green-500': report.isOpen }"
                   >
-                    <button
-                      v-if="isCurrentUser(report.user)"
-                      class="rounded-full px-[1.5px] flex justify-items-center hover:bg-green-500 transition-all duration-500 ease-in-out"
-                      @click="toggleDropdown(report)"
-                      :class="{ 'bg-green-500': report.isOpen }"
+                    <span class="material-symbols-outlined"> more_horiz </span>
+                  </button>
+                  <transition name="fade">
+                    <div v-if="report.isOpen" class="flex flex-row">
+                      <button
+                        v-for="item in items"
+                        @click="executeAction(item.action, report.post_id)"
+                        class="mx-1 hover:bg-green-500 rounded-full px-2"
+                      >
+                        {{ item.label }}
+                      </button>
+                    </div>
+                  </transition>
+                </div>
+              </div>
+              <h5
+                class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+              >
+                {{ report.header }}
+              </h5>
+              <p>Location: {{ report.location }}</p>
+              <p>Date: {{ report.date }}</p>
+              <p>Time: {{ report.time }}</p>
+              <div class="flex justify-between mt-2">
+                <p class="text-gray-600 font-bold">
+                  {{
+                    calculateTimeElapsed(report.dateCreated, report.timeCreated)
+                  }}
+                </p>
+                <div class="flex">
+                  <button @click="toggleUserInfo(report)">
+                    {{ report.user }}
+                  </button>
+                  <div
+                    v-if="showModal"
+                    class="fixed top-0 left-0 right-0 bottom-0 z-50 bg-black opacity-50"
+                  >
+                    <div
+                      class="bg-white p-6 rounded max-w-sm mx-auto mt-16 flex flex-col"
                     >
-                      <span class="material-symbols-outlined">
-                        more_horiz
-                      </span>
-                    </button>
-                    <transition name="fade">
-                      <div v-if="report.isOpen" class="">
-                        <button
-                          v-for="item in items"
-                          @click="executeAction(item.action, report.post_id)"
-                          class="mx-1 hover:bg-green-500 rounded-full px-2"
+                      <div class="flex flex-col">
+                        <span class="font-normal text-base mt-2">Username</span>
+                        <p
+                          class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
                         >
-                          {{ item.label }}
-                        </button>
+                          {{ usr.username }}
+                        </p>
+                        <span class="font-normal text-base mt-2"
+                          >Email Address</span
+                        >
+                        <input
+                          class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
+                          type="text"
+                          v-model="usr.email"
+                        />
                       </div>
-                    </transition>
+                      <button
+                        @click="toggleUserInfo(report)"
+                        class="bg-red-500 p-2 text-white rounded"
+                      >
+                        Close
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </a>
+            </div>
           </div>
         </div>
       </div>
