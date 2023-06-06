@@ -14,6 +14,7 @@ import {
   getStorage,
   ref as stRef,
   uploadBytes,
+  uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
 import "firebase/storage";
@@ -28,7 +29,7 @@ export default {
     const auth = getAuth();
     const storage = getStorage();
 
-    const newReportCategory = ref("Lost");
+    const newReportCategory = ref("");
     const newReportHeader = ref("");
     const newReportDate = ref("");
     const newReportLocation = ref("");
@@ -57,10 +58,12 @@ export default {
       });
     }
     async function uploadImage(img) {
-      console.log(img.name);
+      //console.log(img.name);
       const storageRef = stRef(storage, "postImages/" + img.name);
-      const taskUpload = uploadBytes(storageRef, img);
-      return storageRef.fullPath;
+      const taskUpload = uploadBytesResumable(storageRef, img);
+      await taskUpload;
+      const imageURL = getDownloadURL(storageRef);
+      return await imageURL;
     }
 
     const createReport = () => {
@@ -74,7 +77,7 @@ export default {
         user: this.username,
         timeCreated: this.currentTime,
         dateCreated: this.currentDate,
-        imagePath: this.imgPath,
+        imagePath: imgPath.value,
       }).then((docRef) => {
         const uid = docRef.id;
         //console.log("The UID of the created document is:", uid);
@@ -117,10 +120,11 @@ export default {
     selectImage() {
       this.$refs.fileInput.click();
     },
-    handleUploadImage(event) {
+    async handleUploadImage(event) {
       const img = event.target.files[0];
       this.imagePreview = URL.createObjectURL(img);
-      this.imagePath = this.uploadImage(img);
+      this.imgPath = await this.uploadImage(img);
+      console.log("ImageURL:" + this.imgPath);
     },
   },
 };
@@ -148,6 +152,7 @@ export default {
                 v-model="newReportCategory"
                 class="p-1 border-green-700 border-[1px] my-3 sm:w-64 rounded-md focus:outline-none"
               >
+                <option value="" disabled selected>Select Category</option>
                 <option value="Lost">Lost</option>
                 <option value="Found">Found</option>
               </select>
