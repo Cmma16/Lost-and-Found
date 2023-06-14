@@ -29,6 +29,15 @@ const router = createRouter({
       },
     },
     {
+      path: "/postEdit",
+      name: "postEdit",
+
+      component: () => import("../views/PostEditView.vue"),
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
       path: "/create-report",
       name: "CreateReport",
 
@@ -38,6 +47,13 @@ const router = createRouter({
       },
     },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { x: 0, y: 0 };
+    }
+  },
 });
 
 router.beforeEach((to, from, next) => {

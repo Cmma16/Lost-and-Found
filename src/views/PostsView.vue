@@ -15,8 +15,6 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import Posts from "../components/Posts.vue";
-import SideBar from "../components/SideBar.vue";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import router from "../router";
 import { useStore } from "vuex";
@@ -50,8 +48,9 @@ export default {
     const search = ref("");
     let fbReports = [];
     let activeTab = "allTab";
-    const usr = ref({});
-    const currentUser = ref("");
+    const author = ref({});
+    const thisPost = ref({});
+    const currentUser = ref({});
 
     onMounted(async () => {
       const storage = getStorage();
@@ -60,6 +59,7 @@ export default {
         // Once loading is complete, set isLoading to false
         this.isLoading = false;
       }, 3000); // Delay for 2 seconds
+
       const querySnapshot = await getDocs(collection(db, "reports"));
       for (const doc of querySnapshot.docs) {
         const report = {
@@ -76,12 +76,11 @@ export default {
           imageURL: doc.data().imageURL,
           isOpen: false,
           showFullDescription: false,
-          needsTruncation: false,
-          showModal: false,
         };
         fbReports.push(report);
       }
       reports.value = fbReports;
+
       onAuthStateChanged(auth, (user) => {
         if (user) {
           getCurrentUser(user.uid);
@@ -166,7 +165,11 @@ export default {
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((doc) => {
         //console.log(doc.id, " => ", doc.data());
-        currentUser.value = doc.data().username;
+        const tempCurrUser = {
+          username: doc.data().username,
+          email: doc.data().email,
+        };
+        currentUser.value = tempCurrUser;
       });
     }
 
@@ -179,18 +182,37 @@ export default {
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((doc) => {
         //console.log(doc.id, " => ", doc.data());
-        const tempUser = {
+        const tempAuthor = {
           username: doc.data().username,
           email: doc.data().email,
         };
-        usr.value = tempUser;
+        author.value = tempAuthor;
       });
+    }
+
+    async function getPostDetail(post) {
+      const tempPost = {
+        id: post.post_id,
+        category: post.category,
+        header: post.header,
+        location: post.location,
+        date: post.date,
+        time: post.time,
+        more_info: post.more_info,
+        user: post.user,
+        dateCreated: post.dateCreated,
+        timeCreated: post.timeCreated,
+        imageURL: post.imageURL,
+        isOpen: false,
+      };
+      thisPost.value = tempPost;
     }
 
     return {
       reports,
       search,
-      usr,
+      author,
+      thisPost,
       currentUser,
 
       regex: /[\n\r]/,
@@ -205,6 +227,7 @@ export default {
 
       getUserInfo,
       getCurrentUser,
+      getPostDetail,
 
       searchReports,
       deleteReport,
@@ -213,7 +236,6 @@ export default {
       calculateTimeElapsed,
       displayAll,
       activeTab,
-      isOpen: false,
       items: [
         {
           label: "Resolve",
@@ -237,18 +259,19 @@ export default {
           label: "Modify",
           action: (id) => {
             this.store.dispatch("updateData", id);
-            router.push({ name: "postDetail" });
+            router.push({ name: "postEdit" });
           },
         },
       ],
     };
   },
   computed: {},
-  components: {
-    Posts,
-    SideBar,
-  },
+  components: {},
   methods: {
+    togglePostDropdown(report) {
+      const value = this.thisPost.isOpen;
+      this.thisPost.isOpen = !value;
+    },
     toggleDropdown(report) {
       const index = this.reports.indexOf(report);
       const value = this.reports[index].isOpen;
@@ -267,33 +290,14 @@ export default {
       action(id);
     },
     isCurrentUser(user) {
-      if (user === this.currentUser) return true;
+      if (user === this.currentUser.username) return true;
       else return false;
     },
-    truncateMoreInfo(report) {
-      const index = this.reports.indexOf(report);
-      const value = this.reports[index].showFullDescription;
-
-      this.reports[index].needsTruncation = !value;
-      this.reports[index].showFullDescription = !value;
-    },
-    truncatedMoreInfo(report) {
-      const disc = report.more_info;
-      const containsLineBreaks = this.regex.test(disc);
-
-      if (containsLineBreaks && !report.needsTruncation) {
-        const index = disc.indexOf("\n");
-        if (index !== -1) {
-          return disc.slice(0, index);
-        }
-      } else if (
-        disc.length > this.maxDescriptionLength &&
-        !report.showFullDescription
-      ) {
-        return `${disc.slice(0, this.maxDescriptionLength)}...`;
-      } else {
-        return disc;
-      }
+    displayPostDetails(post) {
+      const bool = this.showFullDescription;
+      this.showFullDescription = !bool;
+      //console.log(value);
+      this.getPostDetail(post);
     },
   },
 };
@@ -398,7 +402,7 @@ export default {
                 />
                 <span
                   class="text-center hidden md:block text-white px-2 text-xl"
-                  >{{ currentUser }}</span
+                  >{{ currentUser.username }}</span
                 >
               </button>
             </div>
@@ -411,13 +415,13 @@ export default {
                   class="text-sm text-gray-900 md:hidden dark:text-white"
                   role="none"
                 >
-                  {{ currentUser }}
+                  {{ currentUser.username }}
                 </p>
                 <p
                   class="text-sm font-medium text-gray-900 truncate dark:text-gray-300"
                   role="none"
                 >
-                  email
+                  {{ currentUser.email }}
                 </p>
               </div>
               <ul class="py-1" role="none">
@@ -645,6 +649,7 @@ export default {
           </div>
         </div>
         <div
+          @click="displayPostDetails(report)"
           class="flex flex-col items-center bg-white border-t border-gray-200 rounded-lg md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
         >
           <img
@@ -672,17 +677,17 @@ export default {
                 </button>
                 <div
                   v-if="showModal"
-                  class="fixed top-0 left-0 right-0 bottom-0 z-50 bg-black opacity-50"
+                  class="fixed top-0 left-0 right-0 bottom-0 z-50"
                 >
                   <div
-                    class="bg-white p-6 rounded max-w-sm mx-auto mt-16 flex flex-col"
+                    class="bg-green-400 p-6 rounded max-w-sm mx-auto mt-16 flex flex-col"
                   >
                     <div class="flex flex-col">
                       <span class="font-normal text-base mt-2">Username</span>
                       <p
                         class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
                       >
-                        {{ usr.username }}
+                        {{ author.username }}
                       </p>
                       <span class="font-normal text-base mt-2"
                         >Email Address</span
@@ -690,7 +695,7 @@ export default {
                       <input
                         class="font-medium pr-1 pb-1 text-base w-50 bg-transparent pointer-events-none"
                         type="text"
-                        v-model="usr.email"
+                        v-model="author.email"
                       />
                     </div>
                     <button
@@ -712,6 +717,95 @@ export default {
       v-if="isLoading"
     >
       <div class="loader">Loading reports</div>
+    </div>
+    <div
+      v-if="showFullDescription"
+      class="fixed top-0 left-0 right-0 bottom-0 z-50"
+    >
+      <div
+        class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row h-[100vh] w-full dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+      >
+        <img
+          class="object-contain w-auto bg-black rounded-t-lg h-52 md:w-full md:h-full md:rounded-none md:rounded-l-lg"
+          :src="!thisPost.imageURL ? '/img/empty.jpg' : thisPost.imageURL"
+          alt=""
+        />
+        <div class="flex flex-col justify-between p-4 md:w-2/5 leading-normal">
+          <div class="flex justify-between">
+            <div class="flex flex-row">
+              <img
+                class="w-11 h-11 rounded-full border border-black"
+                src="/img/profile.jpg"
+                alt="user photo"
+              />
+              <div class="px-2 flex flex-col">
+                <span class="font-semibold">{{ thisPost.user }}</span>
+                <p class="text-gray-600 text-xs font-bold">
+                  {{
+                    calculateTimeElapsed(
+                      thisPost.dateCreated,
+                      thisPost.timeCreated
+                    )
+                  }}
+                </p>
+              </div>
+            </div>
+            <span class="font-semibold text-base">{{ thisPost.category }}</span>
+          </div>
+          <h5
+            class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+          >
+            {{ thisPost.header }}
+          </h5>
+          <p>Location: {{ thisPost.location }}</p>
+          <p>Date: {{ thisPost.date }}</p>
+          <p>Time: {{ thisPost.time }}</p>
+          <div class="border-2 border-green-600 w-200 py-1 rounded mt-2">
+            <h1 class="font-bold m-2">Additional information:</h1>
+            <p class="m-2">
+              {{ thisPost.more_info }}
+            </p>
+          </div>
+          <div class="flex justify-center my-4">
+            <div class="inline-flex rounded-md shadow-sm" role="group">
+              <button
+                type="button"
+                @click="displayPostDetails(post)"
+                class="px-4 py-2 text-sm font-medium text-black bg-transparent border border-b border-red-500 rounded-l-md hover:bg-red-400 hover:text-white focus:z-10 focus:ring-2 focus:ring-red-500 focus:bg-red-500 focus:text-white"
+              >
+                Close
+              </button>
+              <button
+                v-if="!isCurrentUser(thisPost.user)"
+                type="button"
+                class="px-4 py-2 text-sm font-medium text-black bg-transparent border border-b border-green-500 rounded-r-md hover:bg-green-400 hover:text-white focus:z-10 focus:ring-2 focus:ring-green-500 focus:bg-green-500 focus:text-white"
+              >
+                Message
+              </button>
+              <button
+                v-if="isCurrentUser(thisPost.user)"
+                type="button"
+                @click="togglePostDropdown(thisPost)"
+                class="px-4 py-2 text-sm font-medium text-black bg-transparent border border-b border-green-500 rounded-r-md hover:bg-green-400 hover:text-white focus:z-10 focus:ring-2 focus:ring-green-500 focus:bg-green-500 focus:text-white"
+              >
+                Options
+              </button>
+              <div
+                v-if="thisPost.isOpen"
+                class="flex bg-gray-300 flex-col top-[1.8rem] rounded-lg absolute"
+              >
+                <button
+                  v-for="item in items"
+                  @click="executeAction(item.action, thisPost.post_id)"
+                  class="mx-1 hover:bg-green-500 rounded-lg px-2"
+                >
+                  {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

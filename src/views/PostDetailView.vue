@@ -1,109 +1,3 @@
-<template>
-  <div
-    class="body flex pt-5 bg-cover bg-center bg-fixed bg-gradient-to-b from-[#1ebe1e] to-white"
-  >
-    <div class="mx-auto flex flex-row">
-      <div class="flex flex-col items-stretch">
-        <div
-          class="flex flex-col bg-white min-h-screen sm:min-h-full shadow-lg"
-        >
-          <div class="bg-green-700 h-12 flex">
-            <p class="font-bold my-auto text-xl self-start ml-3">Edit Report</p>
-          </div>
-          <form class="mx-8 flex flex-col h" @submit.prevent="updateReport">
-            <span class="flex">
-              <select
-                name=" optionlist "
-                placeholder="Select Category"
-                v-model="newReportCategory"
-                class="p-1 border-green-700 border-[1px] my-3 sm:w-64 rounded-md focus:outline-none"
-              >
-                <option value="Lost">Lost</option>
-                <option value="Found">Found</option>
-              </select>
-            </span>
-            <div class="flex flex-row mb-7">
-              <img src="/img/images.jpg" class="max-h-28 aspect-square" />
-              <div class="flex flex-col justify-items-end ml-3 pt-8">
-                <button
-                  class="bg-green-800 text-white mt-auto mb-0 px-2"
-                  @click=""
-                >
-                  Add Photo
-                </button>
-                <button
-                  class="border-green-800 border-[1px] text-black mt-auto mb-0 px-2"
-                >
-                  Remove Photo
-                </button>
-              </div>
-            </div>
-            <input
-              type="text"
-              v-model="newReportHeader"
-              placeholder="Post Title"
-              class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md"
-              required
-            />
-            <input
-              type="text"
-              v-model="newReportLocation"
-              placeholder="Location"
-              class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md"
-              required
-            />
-            <div class="flex flex-row">
-              <div class="flex flex-col mr-1">
-                <p>Date</p>
-                <input
-                  type="date"
-                  v-model="newReportDate"
-                  placeholder="DD-MM-YYYY"
-                  class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md placeholder:text-black"
-                  required
-                />
-              </div>
-              <div class="flex flex-col ml-1">
-                <p>Time</p>
-                <input
-                  type="time"
-                  v-model="newReportTime"
-                  placeholder="HH : MM"
-                  class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md placeholder:text-black"
-                  required
-                />
-              </div>
-            </div>
-            <textarea
-              name="more-info"
-              cols="30"
-              rows="5"
-              v-model="newReportInfo"
-              placeholder="More Information (optional)"
-              class="focus: outline-none border-[1.5px] border-gray-500 p-1"
-            ></textarea>
-            <div class="flex flex-row my-3 justify-end">
-              <RouterLink to="/posts" class="flex flex-row">
-                <button
-                  class="border-green-800 border-[1.5px] text-black px-2 rounded"
-                >
-                  Cancel
-                </button>
-              </RouterLink>
-              <button
-                class="bg-green-800 text-white ml-2 px-2 rounded"
-                type="submit"
-              >
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script>
 import { useRoute, useRouter } from "vue-router";
 import { storeKey, useStore } from "vuex";
@@ -148,22 +42,7 @@ export default {
       }
     });
 
-    const updateReport = async () => {
-      const reportRef = doc(db, "reports", this.postId);
-      await updateDoc(reportRef, {
-        category: newReportCategory.value,
-        date: newReportDate.value,
-        header: newReportHeader.value,
-        location: newReportLocation.value,
-        more_info: newReportInfo.value,
-        time: newReportTime.value,
-      });
-      this.$router.push({ path: "/posts" });
-      alert("Report updated successfully");
-    };
-
     return {
-      updateReport,
       newReportCategory,
       newReportHeader,
       newReportDate,
@@ -186,3 +65,70 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div
+    class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row h-[100vh] w-full dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+  >
+    <img
+      class="object-contain w-full bg-black rounded-t-lg h-96 md:h-full md:rounded-none md:rounded-l-lg"
+      src="/img/empty.jpg"
+      alt=""
+    />
+    <div class="flex flex-col justify-between p-4 md:w-2/5 leading-normal">
+      <div class="flex justify-between">
+        <div class="flex flex-row">
+          <img
+            class="w-11 h-11 rounded-full border border-black"
+            src="/img/profile.jpg"
+            alt="user photo"
+          />
+          <div class="px-2 flex flex-col">
+            <span class="font-semibold">Username</span>
+            <p class="text-gray-600 text-xs font-bold">Today, 4hrs ago</p>
+          </div>
+        </div>
+        <span class="font-semibold text-base">Lost</span>
+      </div>
+      <h5
+        class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+      >
+        header
+      </h5>
+      <p>Location: report.location</p>
+      <p>Date: report.date</p>
+      <p>Time: report.time</p>
+      <div class="border-2 border-green-600 w-200 py-1 rounded mt-2">
+        <h1 class="font-bold m-2">Additional information:</h1>
+        <p class="m-2">
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. In similique
+          consequuntur sapiente, cupiditate officia optio reprehenderit sint
+          eligendi laboriosam neque quisquam atque molestias vitae magnam minima
+          odio, quidem, ex quis?
+        </p>
+      </div>
+      <div class="flex justify-center my-4">
+        <div class="inline-flex rounded-md shadow-sm" role="group">
+          <button
+            type="button"
+            class="px-4 py-2 text-sm font-medium text-black bg-transparent border border-b border-red-500 rounded-l-md hover:bg-red-400 hover:text-white focus:z-10 focus:ring-2 focus:ring-red-500 focus:bg-red-500 focus:text-white"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 text-sm font-medium text-black bg-transparent border-t border-b border-green-500 hover:bg-green-400 hover:text-white focus:z-10 focus:ring-2 focus:ring-green-500 focus:bg-green-500 focus:text-white"
+          >
+            Message
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 text-sm font-medium text-black bg-transparent border border-b border-green-500 rounded-r-md hover:bg-green-400 hover:text-white focus:z-10 focus:ring-2 focus:ring-green-500 focus:bg-green-500 focus:text-white"
+          >
+            Options
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
