@@ -29,6 +29,15 @@ const router = createRouter({
       },
     },
     {
+      path: "/conversations/:convo_ID",
+      props: true,
+
+      component: () => import("../views/ConversationView.vue"),
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
       path: "/postEdit",
       name: "postEdit",
 

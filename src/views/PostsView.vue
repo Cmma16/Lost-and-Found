@@ -5,8 +5,10 @@ import {
   where,
   collection,
   getDocs,
+  addDoc,
   updateDoc,
   deleteDoc,
+  Timestamp,
   orderBy,
   doc,
 } from "firebase/firestore";
@@ -129,9 +131,18 @@ export default {
     function displayAll() {
       reports.value = fbReports;
     }
-    async function messageThisUser() {
-      router.push({
-        name: "conversations",
+    async function messageThisUser(report, currUser) {
+      const docRef = addDoc(collection(db, "conversations"), {
+        chat_Topic: report.header,
+        created_At: Timestamp.now(),
+        participants: [report.user, currUser.email],
+        updated_At: Timestamp.now(),
+      }).then((docRef) => {
+        const uid = docRef.id;
+        //console.log("The UID of the created document is:", uid);
+        router.push({
+          path: "/conversations/" + uid,
+        });
       });
     }
     function calculateTimeElapsed(dateCreated, timeCreated) {
@@ -671,7 +682,7 @@ export default {
     </div>
     <div
       v-if="showFullDescription"
-      class="fixed top-0 left-0 right-0 bottom-0 z-45"
+      class="fixed top-0 left-0 right-0 bottom-0 z-50"
     >
       <div
         class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row h-[100vh] w-full dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
@@ -695,7 +706,7 @@ export default {
                 </button>
                 <div
                   v-if="showModal"
-                  class="fixed top-0 left-0 right-0 bottom-0 z-50"
+                  class="fixed top-0 left-0 right-0 bottom-0 z-60"
                 >
                   <div
                     class="bg-green-400 p-6 rounded max-w-sm mx-auto mt-16 flex flex-col"
@@ -760,6 +771,7 @@ export default {
                 Close
               </button>
               <button
+                @click="messageThisUser(thisPost, currentUser)"
                 v-if="!isCurrentUser(thisPost.user)"
                 type="button"
                 class="px-4 py-2 text-sm font-medium text-black bg-transparent border border-b border-green-500 rounded-r-md hover:bg-green-400 hover:text-white focus:z-10 focus:ring-2 focus:ring-green-500 focus:bg-green-500 focus:text-white"

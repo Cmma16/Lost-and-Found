@@ -117,7 +117,9 @@
       v-if="currentConvo.chatID == null"
       class="flex items-center justify-center flex-col mx-5 sm:ml-80 h-[80vh] w-screen rounded-xl"
     >
-      <p class="text-xl">Select a conversation to load messages</p>
+      <p class="text-xl">
+        Select a conversation to load messages {{ convo_ID }}
+      </p>
     </div>
   </div>
 </template>
@@ -153,6 +155,12 @@ import { ref, onMounted } from "vue";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 export default {
+  props: {
+    convo_ID: {
+      type: String,
+      default: null,
+    },
+  },
   data() {
     const auth = getAuth();
     const conversations = ref([]);
@@ -169,7 +177,8 @@ export default {
         collection(db, "conversations"),
         where("participants", "array-contains-any", [
           this.$store.state.user.email,
-        ])
+        ]),
+        orderBy("updated_At", "desc")
       );
       const querySnapshot = await getDocs(q);
       for (const doc of querySnapshot.docs) {
@@ -183,6 +192,14 @@ export default {
         chats.push(chat);
       }
       conversations.value = chats;
+
+      if (this.convo_ID != null) {
+        const result = this.conversations.find(
+          (item) => item.chatID === this.convo_ID
+        );
+
+        loadMessages(result);
+      }
 
       onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -240,10 +257,11 @@ export default {
     }
 
     function calculateTimeElapsed(timeUpdated) {
+      const options = { year: "numeric", month: "long", day: "numeric" };
+      const dateString = timeUpdated.toDate().toLocaleString("en-US", options);
+
       const now = new Date();
       var timeElapsed = now - timeUpdated.toDate();
-      /*const options = { year: "numeric", month: "long", day: "numeric" };
-      const dateString = timeUpdated.toDate().toLocaleString("en-US", options);*/
       timeElapsed = timeElapsed / 1000;
       var unitDisc = " second(s) ago";
       var timePassed = Math.floor(timeElapsed);
@@ -260,7 +278,7 @@ export default {
         if (Math.floor(timeElapsed / 86400) > 1) unitDisc = " days ago";
         else unitDisc = " day ago";
       } else {
-        timePassed = dateCreated;
+        timePassed = dateString;
         unitDisc = "";
       }
       return timePassed + unitDisc;
@@ -328,6 +346,5 @@ export default {
       scrollToElement,
     };
   },
-  created() {},
 };
 </script>
