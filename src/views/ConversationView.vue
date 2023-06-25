@@ -277,9 +277,11 @@ export default {
         timePassed = Math.floor(timeElapsed / 86400);
         if (Math.floor(timeElapsed / 86400) > 1) unitDisc = " days ago";
         else unitDisc = " day ago";
-      } else {
+      } else if (timeElapsed > 604800) {
         timePassed = dateString;
-        unitDisc = "";
+      } else {
+        timePassed = Math.floor(timeElapsed);
+        unitDisc = "s ago";
       }
       return timePassed + unitDisc;
     }
