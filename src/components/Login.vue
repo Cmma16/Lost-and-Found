@@ -21,7 +21,7 @@ export default {
 
     const register = () => {
       store.dispatch("register", {
-        email: emailR.value,
+        email: emailR.value.toLowerCase(),
         password: passwordR.value,
         username: username.value,
       });

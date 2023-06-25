@@ -20,10 +20,10 @@ const router = createRouter({
       },
     },
     {
-      path: "/postDetail",
-      name: "postDetail",
+      path: "/conversations",
+      name: "conversations",
 
-      component: () => import("../views/PostDetailView.vue"),
+      component: () => import("../views/ConversationView.vue"),
       meta: {
         requiresAuth: true,
       },

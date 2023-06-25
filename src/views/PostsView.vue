@@ -5,7 +5,9 @@ import {
   where,
   collection,
   getDocs,
+  updateDoc,
   deleteDoc,
+  orderBy,
   doc,
 } from "firebase/firestore";
 import { db } from "@/firebase";
@@ -54,13 +56,12 @@ export default {
 
     onMounted(async () => {
       const storage = getStorage();
-      // Simulate loading data
-      setTimeout(() => {
-        // Once loading is complete, set isLoading to false
-        this.isLoading = false;
-      }, 3000); // Delay for 2 seconds
 
-      const querySnapshot = await getDocs(collection(db, "reports"));
+      const q = query(
+        collection(db, "reports"),
+        where("category", "!=", "Resolved")
+      );
+      const querySnapshot = await getDocs(q);
       for (const doc of querySnapshot.docs) {
         const report = {
           post_id: doc.id,
@@ -127,6 +128,11 @@ export default {
     }
     function displayAll() {
       reports.value = fbReports;
+    }
+    async function messageThisUser() {
+      router.push({
+        name: "conversations",
+      });
     }
     function calculateTimeElapsed(dateCreated, timeCreated) {
       var timeNow = new Date();
@@ -220,8 +226,6 @@ export default {
       postID: null,
       showModal: false,
 
-      isLoading: true,
-
       showFullDescription: false,
       maxDescriptionLength: 30,
 
@@ -232,6 +236,7 @@ export default {
       searchReports,
       deleteReport,
       lostOnly,
+      messageThisUser,
       foundOnly,
       calculateTimeElapsed,
       displayAll,
@@ -243,7 +248,10 @@ export default {
             reports.value = reports.value.filter(
               (report) => report.post_id !== id
             );
-            await deleteDoc(doc(db, "reports", id));
+            const reportRef = doc(db, "reports", id);
+            await updateDoc(reportRef, {
+              category: "Resolved",
+            });
           },
         },
         {
@@ -278,8 +286,8 @@ export default {
       this.reports[index].isOpen = !value;
     },
     toggleUserInfo(report) {
-      const index = this.reports.indexOf(report);
-      const value = this.reports[index].user;
+      //const index = this.reports.indexOf(report);
+      const value = report.user;
       const bool = this.showModal;
       this.showModal = !bool;
       //console.log(value);
@@ -296,7 +304,7 @@ export default {
     displayPostDetails(post) {
       const bool = this.showFullDescription;
       this.showFullDescription = !bool;
-      //console.log(value);
+      //console.log(post);
       this.getPostDetail(post);
     },
   },
@@ -315,22 +323,9 @@ export default {
             data-drawer-toggle="logo-sidebar"
             aria-controls="logo-sidebar"
             type="button"
-            class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+            class="material-symbols-outlined inline-flex items-center p-2 text-white rounded-lg sm:hidden hover:bg-white hover:text-[#003300] focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
           >
-            <span class="sr-only">Open sidebar</span>
-            <svg
-              class="w-6 h-6"
-              aria-hidden="true"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                clip-rule="evenodd"
-                fill-rule="evenodd"
-                d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-              ></path>
-            </svg>
+            menu
           </button>
           <a href="#" class="flex ml-2 md:mr-24">
             <img
@@ -373,7 +368,7 @@ export default {
                 type="text"
                 id="search-navbar"
                 v-model="search"
-                class="block w-full p-2 pr-10 text-sm text-gray-900 rounded-full bg-[#4DEC9A] focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                class="block w-full p-2 pr-10 text-sm text-gray-900 rounded-full bg-[#4DEC9A] focus:border-0 focus:my-[1px] focus:outline-none focus:ring-0"
                 placeholder="Search..."
               />
               <button
@@ -571,30 +566,17 @@ export default {
           </a>
         </li>
         <li>
-          <a
-            href="#"
+          <RouterLink
+            :to="{ name: 'conversations' }"
             class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <svg
-              aria-hidden="true"
-              class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M8.707 7.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l2-2a1 1 0 00-1.414-1.414L11 7.586V3a1 1 0 10-2 0v4.586l-.293-.293z"
-              ></path>
-              <path
-                d="M3 5a2 2 0 012-2h1a1 1 0 010 2H5v7h2l1 2h4l1-2h2V5h-1a1 1 0 110-2h1a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"
-              ></path>
-            </svg>
-            <span class="flex-1 ml-3 whitespace-nowrap">Inbox</span>
+            <span class="material-symbols-outlined">chat</span>
+            <span class="flex-1 ml-3 whitespace-nowrap">Messages</span>
             <span
               class="inline-flex items-center justify-center w-3 h-3 p-3 ml-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300"
               >3</span
             >
-          </a>
+          </RouterLink>
         </li>
         <li>
           <RouterLink to="/create-report" class="flex flex-col">
@@ -610,7 +592,7 @@ export default {
   </aside>
 
   <div class="body flex flex-col sm:ml-64 mt-12 flex-wrap content-center">
-    <div class="flex flex-row flex-wrap">
+    <div class="flex flex-row flex-wrap bg-gray-100">
       <div
         v-for="(report, index) in reports"
         :key="report.post_id"
@@ -672,8 +654,44 @@ export default {
                 }}
               </p>
               <div class="flex">
-                <button @click="toggleUserInfo(report)">
+                <span>
                   {{ report.user }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="fixed top-0 left-0 right-0 bottom-0 bg-white flex justify-center items-center z-50"
+      v-if="reports.length === 0"
+    >
+      <div class="loader">Loading reports</div>
+    </div>
+    <div
+      v-if="showFullDescription"
+      class="fixed top-0 left-0 right-0 bottom-0 z-45"
+    >
+      <div
+        class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row h-[100vh] w-full dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+      >
+        <img
+          class="object-contain w-auto bg-black rounded-t-lg h-52 md:w-full md:h-full md:rounded-none md:rounded-l-lg"
+          :src="!thisPost.imageURL ? '/img/empty.jpg' : thisPost.imageURL"
+          alt=""
+        />
+        <div class="flex flex-col justify-between p-4 md:w-2/5 leading-normal">
+          <div class="flex justify-between">
+            <div class="flex flex-row">
+              <img
+                class="w-11 h-11 rounded-full border border-black"
+                src="/img/profile.jpg"
+                alt="user photo"
+              />
+              <div class="px-2 flex flex-col">
+                <button @click="toggleUserInfo(thisPost)" class="font-semibold">
+                  {{ thisPost.user }}
                 </button>
                 <div
                   v-if="showModal"
@@ -699,47 +717,13 @@ export default {
                       />
                     </div>
                     <button
-                      @click="toggleUserInfo(report)"
+                      @click="toggleUserInfo(thisPost)"
                       class="bg-red-500 p-2 text-white rounded"
                     >
                       Close
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="fixed top-0 left-0 right-0 bottom-0 bg-white flex justify-center items-center z-50"
-      v-if="isLoading"
-    >
-      <div class="loader">Loading reports</div>
-    </div>
-    <div
-      v-if="showFullDescription"
-      class="fixed top-0 left-0 right-0 bottom-0 z-50"
-    >
-      <div
-        class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row h-[100vh] w-full dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-      >
-        <img
-          class="object-contain w-auto bg-black rounded-t-lg h-52 md:w-full md:h-full md:rounded-none md:rounded-l-lg"
-          :src="!thisPost.imageURL ? '/img/empty.jpg' : thisPost.imageURL"
-          alt=""
-        />
-        <div class="flex flex-col justify-between p-4 md:w-2/5 leading-normal">
-          <div class="flex justify-between">
-            <div class="flex flex-row">
-              <img
-                class="w-11 h-11 rounded-full border border-black"
-                src="/img/profile.jpg"
-                alt="user photo"
-              />
-              <div class="px-2 flex flex-col">
-                <span class="font-semibold">{{ thisPost.user }}</span>
                 <p class="text-gray-600 text-xs font-bold">
                   {{
                     calculateTimeElapsed(
@@ -770,7 +754,7 @@ export default {
             <div class="inline-flex rounded-md shadow-sm" role="group">
               <button
                 type="button"
-                @click="displayPostDetails(post)"
+                @click="displayPostDetails(thisPost)"
                 class="px-4 py-2 text-sm font-medium text-black bg-transparent border border-b border-red-500 rounded-l-md hover:bg-red-400 hover:text-white focus:z-10 focus:ring-2 focus:ring-red-500 focus:bg-red-500 focus:text-white"
               >
                 Close
@@ -792,7 +776,7 @@ export default {
               </button>
               <div
                 v-if="thisPost.isOpen"
-                class="flex bg-gray-300 flex-col top-[1.8rem] rounded-lg absolute"
+                class="flex bg-gray-300 flex-col rounded-lg absolute"
               >
                 <button
                   v-for="item in items"
