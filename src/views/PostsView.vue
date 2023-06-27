@@ -11,6 +11,7 @@ import {
   Timestamp,
   orderBy,
   doc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import {
@@ -59,10 +60,7 @@ export default {
     onMounted(async () => {
       const storage = getStorage();
 
-      const q = query(
-        collection(db, "reports"),
-        where("category", "!=", "Resolved")
-      );
+      const q = query(collection(db, "reports"));
       const querySnapshot = await getDocs(q);
       for (const doc of querySnapshot.docs) {
         const report = {
@@ -74,16 +72,17 @@ export default {
           time: doc.data().time,
           more_info: doc.data().more_info,
           user: doc.data().user,
-          dateCreated: doc.data().dateCreated,
-          timeCreated: doc.data().timeCreated,
+          created_at: doc.data().created_at,
           imageURL: doc.data().imageURL,
           isOpen: false,
           showFullDescription: false,
         };
+        //console.log(report);
         fbReports.push(report);
       }
       reports.value = fbReports;
 
+      this.displayAll();
       onAuthStateChanged(auth, (user) => {
         if (user) {
           getCurrentUser(user.uid);
@@ -104,10 +103,10 @@ export default {
     });
     function searchReports() {
       //incomplete
+      console.log(search.value);
       reports.value = fbReports;
       reports.value = reports.value.filter(
         (report) =>
-          report.category.toLowerCase().includes(search.value.toLowerCase()) ||
           report.header.toLowerCase().includes(search.value.toLowerCase()) ||
           report.location.toLowerCase().includes(search.value.toLowerCase()) ||
           report.date.toLowerCase().includes(search.value.toLowerCase()) ||
@@ -128,14 +127,45 @@ export default {
         report.category.includes("Found")
       );
     }
-    function displayAll() {
+    function resolvedOnly() {
       reports.value = fbReports;
+      reports.value = reports.value.filter((report) =>
+        report.category.includes("Resolved")
+      );
     }
+    function displayAll() {
+      const excludedCategory = "Resolved";
+      reports.value = fbReports;
+      reports.value = reports.value.filter(
+        (report) => report.category !== excludedCategory
+      );
+    }
+
+    async function getUser(userName) {
+      //console.log(userID);
+      var aUser = {};
+      const q = query(
+        collection(db, "users"),
+        where("username", "==", userName)
+      );
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        //console.log(doc.id, " => ", doc.data());
+        const tempAuthor = {
+          username: doc.data().username,
+          email: doc.data().email,
+        };
+        aUser = tempAuthor;
+      });
+      return aUser;
+    }
+
     async function messageThisUser(report, currUser) {
+      const reportCreator = await getUser(report.user);
       const docRef = addDoc(collection(db, "conversations"), {
         chat_Topic: report.header,
         created_At: Timestamp.now(),
-        participants: [report.user, currUser.email],
+        participants: [reportCreator.email, currUser.email],
         updated_At: Timestamp.now(),
       }).then((docRef) => {
         const uid = docRef.id;
@@ -145,11 +175,13 @@ export default {
         });
       });
     }
-    function calculateTimeElapsed(dateCreated, timeCreated) {
-      var timeNow = new Date();
-      var dateTime = dateCreated + " " + timeCreated;
-      var date = new Date(dateTime);
-      var timeElapsed = timeNow - date;
+
+    function calculateTimeElapsed(timeUpdated) {
+      const options = { year: "numeric", month: "long", day: "numeric" };
+      const dateString = timeUpdated.toDate().toLocaleString("en-US", options);
+
+      const now = new Date();
+      var timeElapsed = now - timeUpdated.toDate();
       timeElapsed = timeElapsed / 1000;
       var unitDisc = " second(s) ago";
       var timePassed = Math.floor(timeElapsed);
@@ -165,9 +197,12 @@ export default {
         timePassed = Math.floor(timeElapsed / 86400);
         if (Math.floor(timeElapsed / 86400) > 1) unitDisc = " days ago";
         else unitDisc = " day ago";
-      } else {
-        timePassed = dateCreated;
+      } else if (timeElapsed > 604800) {
+        timePassed = dateString;
         unitDisc = "";
+      } else {
+        timePassed = Math.floor(timeElapsed);
+        unitDisc = "s ago";
       }
       return timePassed + unitDisc;
     }
@@ -217,8 +252,7 @@ export default {
         time: post.time,
         more_info: post.more_info,
         user: post.user,
-        dateCreated: post.dateCreated,
-        timeCreated: post.timeCreated,
+        created_at: post.created_at,
         imageURL: post.imageURL,
         isOpen: false,
       };
@@ -241,6 +275,7 @@ export default {
       maxDescriptionLength: 30,
 
       getUserInfo,
+      getUser,
       getCurrentUser,
       getPostDetail,
 
@@ -249,6 +284,7 @@ export default {
       lostOnly,
       messageThisUser,
       foundOnly,
+      resolvedOnly,
       calculateTimeElapsed,
       displayAll,
       activeTab,
@@ -324,7 +360,7 @@ export default {
 
 <template>
   <nav
-    class="fixed top-0 z-50 w-full bg-[#003300] border-b border-gray-200 dark:bg-[#003300] dark:border-gray-700"
+    class="fixed top-0 z-50 py-2 w-full bg-[#003300] border-b border-gray-200 dark:bg-[#003300] dark:border-gray-700"
   >
     <div class="px-3 py-1 lg:px-5 lg:pl-3">
       <div class="flex items-center justify-between">
@@ -349,47 +385,6 @@ export default {
               >FoundIt!</span
             >
           </a>
-        </div>
-        <div class="flex">
-          <button
-            type="button"
-            data-collapse-toggle="navbar-search"
-            aria-controls="navbar-search"
-            aria-expanded="false"
-            class="md:hidden text-white bg-[#4DEC9A] dark:text-gray-400 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 rounded-full text-sm p-2.5 mr-1"
-          >
-            <svg
-              class="w-5 h-5"
-              aria-hidden="true"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                clip-rule="evenodd"
-              ></path>
-            </svg>
-            <span class="sr-only">Search</span>
-          </button>
-          <div class="relative hidden md:block">
-            <div class="flex flex-row">
-              <input
-                type="text"
-                id="search-navbar"
-                v-model="search"
-                class="block w-full p-2 pr-10 text-sm text-gray-900 rounded-full bg-[#4DEC9A] focus:border-0 focus:my-[1px] focus:outline-none focus:ring-0"
-                placeholder="Search..."
-              />
-              <button
-                @click="searchReports"
-                class="material-symbols-outlined rounded-full text-white mr-3 active:scale-[0.9]"
-              >
-                search
-              </button>
-            </div>
-          </div>
         </div>
         <div class="flex items-center">
           <div class="flex items-center ml-3">
@@ -432,12 +427,15 @@ export default {
               </div>
               <ul class="py-1" role="none">
                 <li>
-                  <a
-                    href="#"
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                    role="menuitem"
-                    >Profile</a
-                  >
+                  <RouterLink :to="{ path: '/profile' }">
+                    <a
+                      href="#"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                      role="menuitem"
+                    >
+                      Profiles
+                    </a>
+                  </RouterLink>
                 </li>
                 <li>
                   <a
@@ -478,35 +476,20 @@ export default {
     aria-label="Sidebar"
   >
     <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
-      <div
-        class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1"
-        id="navbar-search"
-      >
-        <div class="relative mt-3 md:hidden">
-          <div
-            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
-          >
-            <svg
-              class="w-5 h-5 text-gray-500"
-              aria-hidden="true"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                clip-rule="evenodd"
-              ></path>
-            </svg>
-          </div>
-          <input
-            type="text"
-            id="search-navbar"
-            class="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            placeholder="Search..."
-          />
-        </div>
+      <div class="flex mx-4 mb-4 pl-2 flex-row bg-green-400 rounded-lg">
+        <input
+          class="block w-full p-2 text-sm text-gray-900 rounded-full border-0 bg-transparent placeholder:text-white focus:ring-0 focus:outline-none"
+          type="text"
+          id="search-navbar"
+          v-model="search"
+          placeholder="Search..."
+        />
+        <button
+          class="material-symbols-outlined rounded-lg px-2 hover:bg-green-600"
+          @click="searchReports"
+        >
+          Search
+        </button>
       </div>
       <ul class="space-y-2 font-medium">
         <li>
@@ -558,21 +541,14 @@ export default {
         <li>
           <a
             href="#"
-            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-green-400 dark:hover:bg-gray-700"
+            @click="
+              resolvedOnly();
+              activeTab = 'resolvedTab';
+            "
+            :class="{ 'bg-green-500': activeTab === 'resolvedTab' }"
           >
-            <svg
-              aria-hidden="true"
-              class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z"
-                clip-rule="evenodd"
-              ></path>
-            </svg>
+            <span class="material-symbols-outlined font-bold"> check_box </span>
             <span class="flex-1 ml-3 whitespace-nowrap">Resolved</span>
           </a>
         </li>
@@ -602,72 +578,72 @@ export default {
     </div>
   </aside>
 
-  <div class="body flex flex-col sm:ml-64 mt-12 flex-wrap content-center">
-    <div class="flex flex-row flex-wrap bg-gray-100">
-      <div
-        v-for="(report, index) in reports"
-        :key="report.post_id"
-        class="bg-white border w-[390px] grow shrink mb-1 max-w-lg border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700"
-      >
-        <div class="flex justify-between px-4 pt-4">
-          <p class="font-bold text-lg">{{ report.category }}</p>
-          <div
-            class="flex rounded-full hover:bg-[#4DEC9A] justify-center relative"
-            :class="{ 'border-[1px]': isCurrentUser(report.user) }"
-          >
-            <button
-              v-if="isCurrentUser(report.user)"
-              class="rounded-full px-[1.5px] flex justify-items-center hover:bg-green-500 transition-all duration-500 ease-in-out"
-              @click="toggleDropdown(report)"
-              :class="{ 'bg-green-500': report.isOpen }"
-            >
-              <span
-                class="material-symbols-outlined active:rotate-90 transition-all"
-              >
-                {{ report.isOpen ? "close" : "more_horiz" }}
-              </span>
-            </button>
+  <div class="body p-4 sm:ml-64 bg-gray-100">
+    <div class="p-4 mt-7 rounded-lg">
+      <div class="grid-container">
+        <div
+          v-for="(report, index) in reports"
+          :key="report.post_id"
+          class="bg-white border w-auto min-w-[444px] max-w-lg border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700"
+        >
+          <div class="flex justify-between px-4 pt-4">
+            <p class="font-bold text-lg">{{ report.category }}</p>
             <div
-              v-if="report.isOpen"
-              class="flex bg-gray-300 flex-col top-[1.8rem] rounded-lg absolute"
+              class="flex rounded-full hover:bg-[#4DEC9A] justify-center relative"
+              :class="{ 'border-[1px]': isCurrentUser(report.user) }"
             >
               <button
-                v-for="item in items"
-                @click="executeAction(item.action, report.post_id)"
-                class="mx-1 hover:bg-green-500 rounded-lg px-2"
+                v-if="isCurrentUser(report.user)"
+                class="rounded-full px-[1.5px] flex justify-items-center hover:bg-green-500 transition-all duration-500 ease-in-out"
+                @click="toggleDropdown(report)"
+                :class="{ 'bg-green-500': report.isOpen }"
               >
-                {{ item.label }}
+                <span
+                  class="material-symbols-outlined active:rotate-90 transition-all"
+                >
+                  {{ report.isOpen ? "close" : "more_horiz" }}
+                </span>
               </button>
+              <div
+                v-if="report.isOpen"
+                class="flex bg-gray-300 flex-col top-[1.8rem] rounded-lg absolute"
+              >
+                <button
+                  v-for="item in items"
+                  @click="executeAction(item.action, report.post_id)"
+                  class="mx-1 hover:bg-green-500 rounded-lg px-2"
+                >
+                  {{ item.label }}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-        <div
-          @click="displayPostDetails(report)"
-          class="flex flex-col items-center bg-white border-t border-gray-200 rounded-lg md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-        >
-          <img
-            class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-            :src="!report.imageURL ? '/img/empty.jpg' : report.imageURL"
-          />
-          <div class="flex flex-col p-4 w-full md:w-2/3 leading-normal">
-            <h5
-              class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
-            >
-              {{ report.header }}
-            </h5>
-            <p>Location: {{ report.location }}</p>
-            <p>Date: {{ report.date }}</p>
-            <p>Time: {{ report.time }}</p>
-            <div class="flex justify-between mt-2">
-              <p class="text-gray-600 font-bold">
-                {{
-                  calculateTimeElapsed(report.dateCreated, report.timeCreated)
-                }}
-              </p>
-              <div class="flex">
-                <span>
-                  {{ report.user }}
-                </span>
+          <div
+            @click="displayPostDetails(report)"
+            class="flex flex-col items-center bg-white border-gray-200 rounded-lg md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+          >
+            <img
+              class="object-scale-down w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
+              :src="!report.imageURL ? '/img/empty.jpg' : report.imageURL"
+            />
+            <div class="flex flex-col p-4 w-full md:w-2/3 leading-normal">
+              <h5
+                class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+              >
+                {{ report.header }}
+              </h5>
+              <p>Location: {{ report.location }}</p>
+              <p>Date: {{ report.date }}</p>
+              <p>Time: {{ report.time }}</p>
+              <div class="flex flex-col justify-between mt-2">
+                <div class="flex">
+                  <span>
+                    {{ report.user }}
+                  </span>
+                </div>
+                <p class="text-gray-600 text-sm font-normal">
+                  {{ calculateTimeElapsed(report.created_at) }}
+                </p>
               </div>
             </div>
           </div>
@@ -676,7 +652,7 @@ export default {
     </div>
     <div
       class="fixed top-0 left-0 right-0 bottom-0 bg-white flex justify-center items-center z-50"
-      v-if="reports.length === 0"
+      v-if="currentUser.email == null"
     >
       <div class="loader">Loading reports</div>
     </div>
@@ -688,7 +664,7 @@ export default {
         class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row h-[100vh] w-full dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
       >
         <img
-          class="object-contain w-auto bg-black rounded-t-lg h-52 md:w-full md:h-full md:rounded-none md:rounded-l-lg"
+          class="object-scale-down w-auto bg-black rounded-t-lg h-52 md:w-full md:h-[30vw] md:rounded-none md:rounded-l-lg"
           :src="!thisPost.imageURL ? '/img/empty.jpg' : thisPost.imageURL"
           alt=""
         />
@@ -736,12 +712,7 @@ export default {
                   </div>
                 </div>
                 <p class="text-gray-600 text-xs font-bold">
-                  {{
-                    calculateTimeElapsed(
-                      thisPost.dateCreated,
-                      thisPost.timeCreated
-                    )
-                  }}
+                  {{ calculateTimeElapsed(thisPost.created_at) }}
                 </p>
               </div>
             </div>
@@ -807,8 +778,18 @@ export default {
 </template>
 
 <style>
+html {
+  background-color: rgb(243 244 246);
+}
+
 * {
   scroll-behavior: smooth;
+}
+
+.grid-container {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
 }
 
 .dropdown-button {

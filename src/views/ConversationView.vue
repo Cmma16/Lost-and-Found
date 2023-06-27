@@ -8,7 +8,7 @@
   >
     <span class="material-symbols-outlined">menu</span>
   </button>
-  <div class="flex flex-row py-10 bg-gray-100 h-[100vh]">
+  <div class="flex flex-row py-0 sm:py-10 bg-gray-100 h-[92vh] sm:h-[100vh]">
     <aside
       id="default-sidebar"
       class="fixed top-10 left-0 z-40 flex bg-white flex-col py-4 h-4/5 rounded-xl transition-transform -translate-x-[108%] sm:translate-x-5"
@@ -16,19 +16,23 @@
     >
       <div class="flex mx-4 mb-4 px-7 flex-row bg-green-400 rounded-full">
         <input
-          class="block w-full p-2 text-sm text-gray-900 rounded-full border-0 bg-transparent focus:ring-0 focus:outline-none"
+          class="block w-full p-2 text-sm text-gray-900 rounded-full border-0 bg-transparent placeholder:text-white focus:ring-0 focus:outline-none"
           type="search"
           placeholder="Search chats here..."
         />
         <button class="material-symbols-outlined">Search</button>
       </div>
-      <div class="h-full py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
-        <ul class="space-y-2 font-medium">
-          <li v-for="convo in conversations">
+      <div class="h-full py-4 overflow-y-auto dark:bg-gray-800">
+        <ul class="font-medium border-y">
+          <li v-for="(convo, index) in conversations" class="border-y py-1">
             <a
               href="#"
-              @click="loadMessages(convo)"
-              class="flex flex-col bg-pink-400 md:bg-yellow-300 sm:bg-orange-400 px-2"
+              @click="
+                loadMessages(convo);
+                activeTab = 'convo' + index;
+              "
+              :class="{ 'bg-green-400': activeTab === 'convo' + index }"
+              class="flex flex-col px-2"
             >
               <div class="flex flex-row justify-between">
                 <span class="font-bold text-xl">{{ convo.chatTopic }}</span>
@@ -50,7 +54,7 @@
     </aside>
     <div
       v-if="currentConvo.chatID != null"
-      class="bg-white flex flex-col mx-5 sm:ml-80 h-[80vh] w-screen rounded-xl"
+      class="bg-white flex flex-col mx-0 sm:mx-5 sm:ml-80 h-full sm:h-[80vh] w-screen rounded-xl"
       ref="scrollToElement"
     >
       <div
@@ -169,6 +173,7 @@ export default {
 
     const messageDraft = ref("");
     const scrollToElement = ref();
+    let activeTab = "";
     let chats = [];
     const currentUser = ref({});
 
@@ -279,6 +284,7 @@ export default {
         else unitDisc = " day ago";
       } else if (timeElapsed > 604800) {
         timePassed = dateString;
+        unitDisc = "";
       } else {
         timePassed = Math.floor(timeElapsed);
         unitDisc = "s ago";
@@ -296,7 +302,7 @@ export default {
       }).then((docRef) => {
         loadMessages(chat);
         messageDraft.value = "";
-        scrollToElement.value.scrollTop = scrollContainer.value.scrollHeight;
+        //scrollToElement.value.scrollTop = scrollContainer.value.scrollHeight;
       });
     }
 
@@ -344,6 +350,7 @@ export default {
       loadMessages,
       sendMessage,
       currentConvo,
+      activeTab,
       messageDraft,
       scrollToElement,
     };

@@ -29,6 +29,16 @@ const router = createRouter({
       },
     },
     {
+      //path: "/profile/:currentUserUID",
+      path: "/profile",
+      name: "profile",
+
+      component: () => import("../views/ProfileView.vue"),
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
       path: "/conversations/:convo_ID",
       props: true,
 

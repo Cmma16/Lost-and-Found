@@ -4,6 +4,7 @@ import {
   collection,
   doc,
   getDocs,
+  Timestamp,
   where,
   query,
   snapshotEqual,
@@ -17,7 +18,7 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import "firebase/storage";
+import router from "../router";
 
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
@@ -59,11 +60,34 @@ export default {
     }
     async function uploadImage(img) {
       //console.log(img.name);
-      const storageRef = stRef(storage, "postImages/" + img.name);
-      const taskUpload = uploadBytesResumable(storageRef, img);
-      await taskUpload;
-      const imageURL = getDownloadURL(storageRef);
-      return await imageURL;
+      if (img) {
+        const storageRef = stRef(storage, "postImages/" + img.name);
+        const taskUpload = uploadBytesResumable(storageRef, img);
+        await taskUpload;
+        const imageURL = getDownloadURL(storageRef);
+        return await imageURL;
+      } else {
+        return "";
+      }
+    }
+
+    async function createNewReport(imgURL) {
+      const docRef = addDoc(collection(db, "reports"), {
+        category: newReportCategory.value,
+        date: newReportDate.value,
+        header: newReportHeader.value,
+        location: newReportLocation.value,
+        more_info: newReportInfo.value,
+        time: newReportTime.value,
+        user: this.username,
+        created_at: Timestamp.now(),
+        imageURL: await imgURL,
+      }).then((docRef) => {
+        const uid = docRef.id;
+        //console.log("The UID of the created document is:", uid);
+      });
+      router.push({ path: "/posts" });
+      alert("Report published successfully");
     }
 
     const createReport = () => {
@@ -77,7 +101,7 @@ export default {
         user: this.username,
         timeCreated: this.currentTime,
         dateCreated: this.currentDate,
-        imagePath: imgPath.value,
+        imageURL: imgPath.value,
       }).then((docRef) => {
         const uid = docRef.id;
         //console.log("The UID of the created document is:", uid);
@@ -87,6 +111,7 @@ export default {
     };
     return {
       createReport,
+      createNewReport,
       uploadImage,
       imagePreview: null,
       isOpen: false,
@@ -120,134 +145,159 @@ export default {
     selectImage() {
       this.$refs.fileInput.click();
     },
-    async handleUploadImage(event) {
-      const img = event.target.files[0];
-      this.imagePreview = URL.createObjectURL(img);
-      this.imgPath = await this.uploadImage(img);
-      console.log("ImageURL:" + this.imgPath);
+    async handleUploadImage() {
+      const inputFile = this.$refs.imgInput;
+      const file = inputFile.files[0];
+      const imgURL = await this.uploadImage(file);
+      return imgURL;
     },
   },
 };
 </script>
 
 <template>
-  <div
-    class="body flex pt-5 bg-cover bg-center bg-fixed bg-gradient-to-b from-[#1ebe1e] to-white"
-  >
-    <div class="mx-auto flex flex-row">
-      <div class="flex flex-col items-stretch">
-        <div
-          class="flex flex-col bg-white min-h-screen sm:min-h-full shadow-lg"
-        >
-          <div class="bg-green-700 h-12 flex">
-            <p class="font-bold my-auto text-xl self-start ml-3">
-              Create Report
-            </p>
+  <section class="bg-white dark:bg-gray-900">
+    <div class="py-8 px-4 mx-auto max-w-2xl lg:py-16">
+      <h2 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
+        Add a new report
+      </h2>
+      <form action="#" @submit.prevent="createNewReport(handleUploadImage())">
+        <div class="flex flex-row mb-7"></div>
+        <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
+          <div>
+            <label
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              for="user_avatar"
+            >
+              Upload a picture<span class="font-normal">(optional)</span>
+            </label>
+            <input
+              class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+              aria-describedby="user_avatar_help"
+              id="user_avatar"
+              ref="imgInput"
+              type="file"
+            />
+            <div
+              class="mt-1 text-sm text-gray-500 dark:text-gray-300"
+              id="user_avatar_help"
+            ></div>
           </div>
-          <form class="mx-8 flex flex-col h" @submit.prevent="createReport">
-            <span class="flex">
-              <select
-                name=" optionlist "
-                placeholder="Select Category"
-                v-model="newReportCategory"
-                class="p-1 border-green-700 border-[1px] my-3 sm:w-64 rounded-md focus:outline-none"
-              >
-                <option value="" disabled selected>Select Category</option>
-                <option value="Lost">Lost</option>
-                <option value="Found">Found</option>
-              </select>
-            </span>
-            <div class="flex flex-row mb-7">
-              <div
-                class="image-holder border-[1px] border-black aspect-square min-w-[112px] bg-cover bg-center flex flex-col justify-center relative"
-                @pointerenter="toggleAddImageBtn"
-                @pointerleave="toggleAddImageBtn"
-              >
-                <img
-                  v-if="imagePreview"
-                  :src="imagePreview"
-                  class="max-h-28 aspect-square object-cover"
-                />
-                <button
-                  v-if="isOpen"
-                  class="border-green-800 border-[1px] text-black py-[1px] px-3 rounded-full absolute self-center hover:bg-green-400"
-                  @click="selectImage"
-                  type="button"
-                >
-                  Add Photo
-                </button>
-                <input
-                  type="file"
-                  ref="fileInput"
-                  @change="handleUploadImage"
-                  class="hidden"
-                />
-              </div>
-            </div>
+          <div>
+            <label
+              for="category"
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              >Category</label
+            >
+            <select
+              id="category"
+              name=" optionlist "
+              v-model="newReportCategory"
+              required=""
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+            >
+              <option value="" disabled selected>Select category</option>
+              <option value="Lost">Lost</option>
+              <option value="Found">Found</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label
+              for="title"
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              >Report Title</label
+            >
             <input
               type="text"
+              name="title"
+              id="title"
               v-model="newReportHeader"
-              placeholder="Post Title"
-              class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md"
-              required
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+              placeholder="Type report title"
+              required=""
             />
+          </div>
+          <div class="sm:col-span-2">
+            <label
+              for="location"
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              >Location</label
+            >
             <input
               type="text"
+              name="location"
+              id="location"
               v-model="newReportLocation"
-              placeholder="Location"
-              class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md"
-              required
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+              placeholder="Type location"
+              required=""
             />
-            <div class="flex flex-row">
-              <div class="flex flex-col mr-1">
-                <p>Date</p>
-                <input
-                  type="date"
-                  v-model="newReportDate"
-                  placeholder="<Month> <Day>, <Year>"
-                  class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md"
-                  required
-                />
-              </div>
-              <div class="flex flex-col ml-20">
-                <p>Time</p>
-                <input
-                  type="time"
-                  v-model="newReportTime"
-                  placeholder="HH:MM AM/PM"
-                  class="p-1 border-[1.5px] border-gray-500 focus: outline-none my-1 rounded-md"
-                  required
-                />
-              </div>
-            </div>
+          </div>
+          <div class="w-full">
+            <label
+              for="date"
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              >Date</label
+            >
+            <input
+              type="date"
+              name="date"
+              id="date"
+              v-model="newReportDate"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+              placeholder=""
+              required=""
+            />
+          </div>
+          <div class="w-full">
+            <label
+              for="time"
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              >Time</label
+            >
+            <input
+              type="time"
+              v-model="newReportTime"
+              name="time"
+              id="time"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+              placeholder=""
+              required=""
+            />
+          </div>
+          <div class="sm:col-span-2">
+            <label
+              for="description"
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              >Description<span class="font-normal">(optional)</span></label
+            >
             <textarea
-              name="more-info"
-              cols="30"
-              rows="5"
+              id="description"
+              rows="8"
               v-model="newReportInfo"
-              placeholder="More Information (optional)"
-              class="focus: outline-none border-[1.5px] border-gray-500 p-1"
+              class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+              placeholder="Your description here"
             ></textarea>
-            <div class="flex flex-row my-3 justify-end">
-              <RouterLink to="/posts" class="flex flex-row">
-                <button
-                  class="border-green-800 border-[1.5px] text-black px-2 rounded"
-                >
-                  Cancel
-                </button>
-              </RouterLink>
-              <button
-                class="bg-green-800 text-white ml-2 px-2 rounded"
-                type="submit"
-              >
-                Publish
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
-      </div>
+        <div class="flex flex-row">
+          <button
+            type="submit"
+            class="inline-flex items-center mx-1 px-5 py-2.5 mt-4 sm:mt-6 text-sm font-medium text-center text-white bg-green-700 rounded-lg focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-900 hover:bg-green-800"
+          >
+            Publish report
+          </button>
+          <RouterLink to="/posts" class="flex flex-row mx-1">
+            <button
+              class="inline-flex items-center px-5 py-2.5 mt-4 sm:mt-6 text-sm border-green-700 border-2 font-medium text-center bg-white text-green-700 rounded-lg focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-900 hover:bg-green-50"
+            >
+              Cancel
+            </button>
+          </RouterLink>
+        </div>
+      </form>
     </div>
-  </div>
+  </section>
 </template>
 
 <style>
