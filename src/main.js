@@ -41,24 +41,25 @@ export const store = createStore({
     },
     async login({ commit }, details) {
       const { email, password } = details;
+      let message;
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        alert("Login Successful");
+        message = "Login Successful";
       } catch (error) {
         switch (error.code) {
           case "auth/user-not-found":
-            alert("User not found");
+            message = "User not found";
             break;
           case "auth/wrong-password":
-            alert("Wrong password");
+            message = "Wrong password";
             break;
           default:
-            alert("Something went wrong");
+            message = "Something went wrong";
             console.error(error);
         }
 
-        return;
+        return message;
       }
 
       commit("SET_USER", auth.currentUser);
@@ -76,6 +77,7 @@ export const store = createStore({
 
     async register({ commit }, details) {
       const { email, password, username, phone_number } = details;
+      let regMessage;
 
       try {
         const user = await createUserWithEmailAndPassword(
@@ -90,27 +92,27 @@ export const store = createStore({
           username: username,
           password: password,
         });
-        alert("Account registration successful");
+        regMessage = "Account registration successful";
       } catch (error) {
         switch (error.code) {
           case "auth/email-already-in-use":
-            alert("Email already in use");
+            regMessage = "Email already in use";
             break;
           case "auth/invalid-email":
-            alert("Invalid email");
+            "Invalid email";
             break;
           case "auth/operation-not-allowed":
-            alert("Operation not allowed");
+            regMessage = "Operation not allowed";
             break;
           case "auth/weak-password":
-            alert("Weak password");
+            regMessage = "Weak password";
             break;
           default:
-            alert("Something went wrong");
+            regMessage = "Something went wrong";
             console.error(error);
         }
 
-        return;
+        return regMessage;
       }
 
       commit("SET_USER", auth.currentUser);

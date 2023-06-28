@@ -60,7 +60,7 @@ export default {
     onMounted(async () => {
       const storage = getStorage();
 
-      const q = query(collection(db, "reports"));
+      const q = query(collection(db, "reports"), orderBy("created_at", "desc"));
       const querySnapshot = await getDocs(q);
       for (const doc of querySnapshot.docs) {
         const report = {
@@ -207,11 +207,6 @@ export default {
       return timePassed + unitDisc;
     }
 
-    async function deleteReport(id) {
-      reports.value = reports.value.filter((report) => report.post_id !== id);
-      await deleteDoc(doc(db, "reports", id));
-    }
-
     async function getCurrentUser(userUID) {
       const q = query(collection(db, "users"), where("uid", "==", userUID));
       const querySnapshot = await getDocs(q);
@@ -280,7 +275,6 @@ export default {
       getPostDetail,
 
       searchReports,
-      deleteReport,
       lostOnly,
       messageThisUser,
       foundOnly,
@@ -291,6 +285,7 @@ export default {
       items: [
         {
           label: "Resolve",
+          icon: "check_box",
           action: async (id) => {
             reports.value = reports.value.filter(
               (report) => report.post_id !== id
@@ -302,16 +297,8 @@ export default {
           },
         },
         {
-          label: "Delete",
-          action: async (id) => {
-            reports.value = reports.value.filter(
-              (report) => report.post_id !== id
-            );
-            await deleteDoc(doc(db, "reports", id));
-          },
-        },
-        {
           label: "Modify",
+          icon: "edit",
           action: (id) => {
             this.store.dispatch("updateData", id);
             router.push({ name: "postEdit" });
@@ -438,20 +425,15 @@ export default {
                   </RouterLink>
                 </li>
                 <li>
-                  <a
-                    href="#"
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                    role="menuitem"
-                    >Messages</a
-                  >
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                    role="menuitem"
-                    >Settings</a
-                  >
+                  <RouterLink :to="{ name: 'conversations' }">
+                    <a
+                      href="#"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                      role="menuitem"
+                    >
+                      Messages
+                    </a>
+                  </RouterLink>
                 </li>
                 <li>
                   <a
@@ -611,8 +593,11 @@ export default {
                 <button
                   v-for="item in items"
                   @click="executeAction(item.action, report.post_id)"
-                  class="mx-1 hover:bg-green-500 rounded-lg px-2"
+                  class="mx-1 flex flex-row py-1 hover:bg-green-500 font-medium pr-2 rounded-lg"
                 >
+                  <span class="material-symbols-outlined mr-2">
+                    {{ item.icon }}
+                  </span>
                   {{ item.label }}
                 </button>
               </div>

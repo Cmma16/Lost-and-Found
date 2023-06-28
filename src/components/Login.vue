@@ -11,21 +11,47 @@ export default {
     const emailR = ref("");
     const passwordR = ref("");
     const username = ref("");
+    const loginMessage = ref("");
+    const animatedDiv = ref(null);
 
     const login = () => {
-      store.dispatch("login", {
+      const message = store.dispatch("login", {
         email: emailL.value,
         password: passwordL.value,
       });
+      alert(message);
     };
 
-    const register = () => {
+    async function loginUser() {
+      const message = store.dispatch("login", {
+        email: emailL.value,
+        password: passwordL.value,
+      });
+      loginMessage.value = await message;
+      setTimeout(() => {
+        loginMessage.value = "";
+      }, 4000);
+    }
+
+    async function register() {
+      const regMessage = store.dispatch("register", {
+        email: emailR.value.toLowerCase(),
+        password: passwordR.value,
+        username: username.value,
+      });
+      loginMessage.value = await regMessage;
+      setTimeout(() => {
+        loginMessage.value = "";
+      }, 4000);
+    }
+
+    /*const register = () => {
       store.dispatch("register", {
         email: emailR.value.toLowerCase(),
         password: passwordR.value,
         username: username.value,
       });
-    };
+    };*/
 
     return {
       emailL,
@@ -33,7 +59,11 @@ export default {
       emailR,
       passwordR,
       username,
+      showAlert: false,
+      loginMessage,
+      animatedDiv,
       login,
+      loginUser,
       register,
     };
   },
@@ -43,9 +73,21 @@ export default {
     };
   },
   methods: {
+    closeDiv() {
+      this.$refs.animatedDiv.classList.add("animate-slide-out-left");
+      this.$refs.animatedDiv.classList.remove("animate-slide-in-left");
+      setTimeout(() => {
+        this.loginMessage = "";
+      }, 500);
+    },
     onInput() {
       // Update the name data property whenever the input value changes
       this.name = target.value;
+    },
+    displayAlert() {
+      /*const bool = this.showAlert;
+      this.showAlert = !bool;*/
+      console.log(this.loginMessage);
     },
 
     checkInput() {
@@ -61,6 +103,27 @@ export default {
 
 <template>
   <div class="body flex flex-col-reverse md:flex-row">
+    <div
+      v-if="loginMessage != ''"
+      ref="animatedDiv"
+      :class="{
+        'bg-green-50 text-green-800': loginMessage == 'Login Successful',
+      }"
+      class="flex p-4 z-50 fixed top-1 w-80 text-sm items-center justify-between text-red-800 rounded-lg bg-red-50 transition-opacity duration-1000 ease-out animate-slide-in-left"
+    >
+      <div class="flex items-center">
+        <span class="material-symbols-outlined pr-2"> error </span>
+        <span class="font-medium">{{ loginMessage }}</span>
+      </div>
+      <button
+        type="button"
+        id="closeBtn"
+        @click="closeDiv"
+        class="text-xl font-bold"
+      >
+        &times;
+      </button>
+    </div>
     <div
       class="container_one bg-cover bg-right flex bg-[url('/img/vsu2.jpg')] w-full md:w-1/2"
     >
@@ -78,7 +141,7 @@ export default {
               <p class="text-sm text-gray-500">Begin your session now</p>
             </h1>
             <div class="logins">
-              <form class="form mb-[50px]" @submit.prevent="login">
+              <form class="form mb-[50px]" @submit.prevent="loginUser">
                 <label class="lab" for="chk" aria-hidden="true">Log in</label>
                 <div class="inputbox">
                   <input type="email" v-model="emailL" class="" required />
@@ -97,6 +160,7 @@ export default {
                 </div>
                 <button
                   type="submit"
+                  @click="displayAlert"
                   class="login bg-green-700 h-9 mt-4 text-white"
                 >
                   Login
@@ -106,7 +170,6 @@ export default {
                 </button>
               </form>
             </div>
-
             <div class="register">
               <span class="lab self-center text-dec" id="border_text">or</span>
               <form class="form" @submit.prevent="register">

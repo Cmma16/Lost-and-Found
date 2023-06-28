@@ -39,6 +39,8 @@ export default {
     const username = ref("");
     const imgPath = ref("");
 
+    const alertContent = ref("");
+
     onMounted(async () => {
       onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -86,11 +88,14 @@ export default {
         const uid = docRef.id;
         //console.log("The UID of the created document is:", uid);
       });
-      router.push({ path: "/posts" });
-      alert("Report published successfully");
+      alertContent.value = "Report published successfully";
+      setTimeout(() => {
+        alertContent.value = "";
+        router.push({ path: "/posts" });
+      }, 2000);
     }
 
-    const createReport = () => {
+    /*const createReport = () => {
       const docRef = addDoc(collection(db, "reports"), {
         category: newReportCategory.value,
         date: newReportDate.value,
@@ -106,21 +111,23 @@ export default {
         const uid = docRef.id;
         //console.log("The UID of the created document is:", uid);
       });
+      alertContent.value = "Report published successfully"
       this.$router.push({ path: "/posts" });
-      alert("Report published successfully");
-    };
+    };*/
     return {
-      createReport,
+      //createReport,
       createNewReport,
       uploadImage,
       imagePreview: null,
       isOpen: false,
       newReportCategory,
+      alertContent,
       newReportHeader,
       newReportDate,
       newReportLocation,
       newReportInfo,
       newReportTime,
+      maxDate: new Date().toISOString().split("T")[0],
       imgPath,
       username,
       storage,
@@ -151,11 +158,39 @@ export default {
       const imgURL = await this.uploadImage(file);
       return imgURL;
     },
+
+    closeDiv() {
+      this.$refs.animatedDiv.classList.add("animate-slide-out-left");
+      this.$refs.animatedDiv.classList.remove("animate-slide-in-left");
+      setTimeout(() => {
+        this.alertDetails.alertContent = null;
+      }, 500);
+    },
   },
 };
 </script>
 
 <template>
+  <!---Alert dialog-->
+  <div
+    v-if="alertContent != ''"
+    ref="animatedDiv"
+    class="flex p-4 z-50 fixed top-1 w-80 text-sm items-center justify-between text-green-800 rounded-lg bg-green-50 transition-opacity duration-1000 ease-out animate-slide-in-left"
+  >
+    <div class="flex items-center">
+      <span class="material-symbols-outlined pr-2"> check_circle </span>
+      <span class="font-medium">{{ alertContent }}</span>
+    </div>
+    <button
+      type="button"
+      id="closeBtn"
+      @click="closeDiv"
+      class="text-xl font-bold"
+    >
+      &times;
+    </button>
+  </div>
+  <!---Alert dialog-->
   <section class="bg-white dark:bg-gray-900">
     <div class="py-8 px-4 mx-auto max-w-2xl lg:py-16">
       <h2 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
@@ -243,6 +278,7 @@ export default {
               type="date"
               name="date"
               id="date"
+              :max="maxDate"
               v-model="newReportDate"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
               placeholder=""

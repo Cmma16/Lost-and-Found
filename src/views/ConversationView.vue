@@ -303,6 +303,10 @@ export default {
         loadMessages(chat);
         messageDraft.value = "";
         //scrollToElement.value.scrollTop = scrollContainer.value.scrollHeight;
+        const q = doc(db, "conversations", chat.chatID);
+        updateDoc(q, {
+          updated_At: Timestamp.now(),
+        });
       });
     }
 

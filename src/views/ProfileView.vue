@@ -253,14 +253,13 @@ export default {
               </div>
               <ul class="py-1" role="none">
                 <li>
-                  <RouterLink :to="{ path: '/profile' }">
+                  <RouterLink :to="{ path: '/posts' }">
                     <a
                       href="#"
                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
                       role="menuitem"
+                      >Reports</a
                     >
-                      Profiles
-                    </a>
                   </RouterLink>
                 </li>
                 <li>
@@ -269,14 +268,6 @@ export default {
                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
                     role="menuitem"
                     >Messages</a
-                  >
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                    role="menuitem"
-                    >Settings</a
                   >
                 </li>
                 <li>
@@ -339,11 +330,14 @@ export default {
     <div
       class="w-full md:w-[40rem] rounded-none md:rounded-3xl bg-white h-[100vh] md:h-modal mx-0 md:mx-2"
     >
-      <h1 class="py-2 text-xl font-bold pl-4 shadow-md">My Posts</h1>
+      <h1 class="py-2 text-xl font-bold pl-4 shadow-md">My Reports</h1>
       <div class="h-[85%] px-2">
         <div
           class="flex flex-col items-center p-4 rounded-lg h-full overflow-y-auto"
         >
+          <p v-if="myPosts.length == 0" class="font-medium text-xl">
+            No reports yet
+          </p>
           <div
             v-for="(post, index) in myPosts"
             :key="post.post_id"
@@ -417,11 +411,12 @@ export default {
         </div>
       </div>
     </div>
+    <!--
     <div
       class="fixed top-0 left-0 right-0 bottom-0 bg-white flex justify-center items-center z-50"
-      v-if="myPosts.length === 0"
+      v-if="myPosts == null"
     >
       <div class="loader">Loading reports</div>
-    </div>
+    </div>-->
   </section>
 </template>
