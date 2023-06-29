@@ -57,6 +57,10 @@ export default {
     const thisPost = ref({});
     const currentUser = ref({});
 
+    const defaultImgPath = "./img/download.png";
+    const logoPath = "./img/foundIt icon.png";
+    const defaultProfilePic = "./img/profile.jpg";
+
     onMounted(async () => {
       const storage = getStorage();
 
@@ -261,6 +265,10 @@ export default {
       thisPost,
       currentUser,
 
+      defaultImgPath,
+      logoPath,
+      defaultProfilePic,
+
       regex: /[\n\r]/,
 
       postID: null,
@@ -362,11 +370,7 @@ export default {
             menu
           </button>
           <a href="#" class="flex ml-2 md:mr-24">
-            <img
-              src="/img/foundIt icon.png"
-              class="h-8 mr-3"
-              alt="FoundIt! Logo"
-            />
+            <img :src="logoPath" class="h-8 mr-3" alt="FoundIt! Logo" />
             <span
               class="self-center text-xl text-white font-semibold sm:text-2xl whitespace-nowrap dark:text-white"
               >FoundIt!</span
@@ -385,7 +389,7 @@ export default {
                 <span class="sr-only">Open user menu</span>
                 <img
                   class="w-8 h-8 rounded-full"
-                  src="/img/profile.jpg"
+                  :src="defaultProfilePic"
                   alt="user photo"
                 />
                 <span
@@ -420,7 +424,7 @@ export default {
                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
                       role="menuitem"
                     >
-                      Profiles
+                      Profile
                     </a>
                   </RouterLink>
                 </li>
@@ -605,11 +609,11 @@ export default {
           </div>
           <div
             @click="displayPostDetails(report)"
-            class="flex flex-col items-center bg-white border-gray-200 rounded-lg md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+            class="flex flex-col items-center bg-white border-gray-200 rounded-lg md:flex-row md:max-w-xl"
           >
             <img
               class="object-scale-down w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-              :src="!report.imageURL ? '/img/empty.jpg' : report.imageURL"
+              :src="!report.imageURL ? defaultImgPath : report.imageURL"
             />
             <div class="flex flex-col p-4 w-full md:w-2/3 leading-normal">
               <h5
@@ -650,7 +654,7 @@ export default {
       >
         <img
           class="object-scale-down w-auto bg-black rounded-t-lg h-52 md:w-full md:h-[30vw] md:rounded-none md:rounded-l-lg"
-          :src="!thisPost.imageURL ? '/img/empty.jpg' : thisPost.imageURL"
+          :src="!thisPost.imageURL ? defaultImgPath : thisPost.imageURL"
           alt=""
         />
         <div class="flex flex-col justify-between p-4 md:w-2/5 leading-normal">
@@ -658,7 +662,7 @@ export default {
             <div class="flex flex-row">
               <img
                 class="w-11 h-11 rounded-full border border-black"
-                src="/img/profile.jpg"
+                :src="defaultProfilePic"
                 alt="user photo"
               />
               <div class="px-2 flex flex-col">

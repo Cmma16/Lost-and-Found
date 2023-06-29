@@ -26,7 +26,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import { ref, onMounted } from "vue";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged, updateEmail } from "firebase/auth";
 import { useStore } from "vuex";
 import router from "../router";
 
@@ -45,9 +45,14 @@ export default {
     };
   },
   data() {
+    const auth = getAuth();
     const myPosts = ref([]);
     let posts = [];
     const currentUser = ref({});
+    const userProfile = ref({});
+    const defaultImgPath = "./img/download.png";
+    const logoPath = "./img/foundIt icon.png";
+    const defaultProfilePic = "./img/profile.jpg";
 
     onMounted(async () => {
       await getCurrentUser(this.$store.state.user.uid);
@@ -98,6 +103,24 @@ export default {
           email: doc.data().email,
         };
         currentUser.value = tempCurrUser;
+        const tempUserProfile = {
+          userDocUID: doc.id,
+          username: doc.data().username,
+          email: doc.data().email,
+          password: doc.data.password,
+        };
+        userProfile.value = tempUserProfile;
+      });
+    }
+
+    async function updateProfile() {
+      updateEmail(auth.currentUser, userProfile.email).then(() => {
+        console.log("Email Updated");
+      });
+      const userRef = doc(db, "users", userProfile.value.userDocUID);
+      await updateDoc(userRef, {
+        email: userProfile.value.email,
+        username: userProfile.value.username,
       });
     }
 
@@ -139,7 +162,12 @@ export default {
 
     return {
       getCurrentUser,
+      updateProfile,
       currentUser,
+      userProfile,
+      defaultImgPath,
+      logoPath,
+      defaultProfilePic,
       myPosts,
       calculateTimeElapsed,
       items: [
@@ -201,11 +229,7 @@ export default {
             menu
           </button>
           <RouterLink :to="{ path: '/' }" class="flex ml-2 md:mr-24">
-            <img
-              src="/img/foundIt icon.png"
-              class="h-8 mr-3"
-              alt="FoundIt! Logo"
-            />
+            <img :src="logoPath" class="h-8 mr-3" alt="FoundIt! Logo" />
             <span
               class="self-center text-xl text-white font-semibold sm:text-2xl whitespace-nowrap dark:text-white"
               >FoundIt!</span
@@ -224,7 +248,7 @@ export default {
                 <span class="sr-only">Open user menu</span>
                 <img
                   class="w-8 h-8 rounded-full"
-                  src="/img/profile.jpg"
+                  :src="defaultProfilePic"
                   alt="user photo"
                 />
                 <span
@@ -258,7 +282,7 @@ export default {
                       href="#"
                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
                       role="menuitem"
-                      >Reports</a
+                      >Home</a
                     >
                   </RouterLink>
                 </li>
@@ -294,7 +318,7 @@ export default {
         class="flex py-2 rounded-none md:rounded-3xl gap-1 shadow-xl flex-row md:flex-col justify-center items-center bg-white h-[100%]"
       >
         <img
-          src="/img/profile.jpg"
+          :src="defaultProfilePic"
           alt="profile_pic"
           class="border-2 aspect-square rounded-full h-36 md:h-[30%] w-fit"
         />
@@ -306,6 +330,8 @@ export default {
           <div class="inline-flex rounded-md shadow-sm" role="group">
             <button
               type="button"
+              data-modal-target="authentication-modal"
+              data-modal-toggle="authentication-modal"
               class="px-4 py-2 text-xs font-medium text-gray-900 bg-white border border-gray-200 rounded-l-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white"
             >
               Edit Profile
@@ -378,7 +404,7 @@ export default {
             >
               <img
                 class="object-scale-down w-full rounded-t-lg h-52"
-                :src="!post.imageURL ? '/img/empty.jpg' : post.imageURL"
+                :src="!post.imageURL ? defaultImgPath : post.imageURL"
               />
               <div class="flex flex-col p-4 w-full leading-normal">
                 <h5
@@ -419,4 +445,82 @@ export default {
       <div class="loader">Loading reports</div>
     </div>-->
   </section>
+  <!-- Main modal -->
+  <div
+    id="authentication-modal"
+    tabindex="-1"
+    aria-hidden="true"
+    class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full"
+  >
+    <div class="relative w-full max-w-md max-h-full">
+      <!-- Modal content -->
+      <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+        <button
+          type="button"
+          class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-800 dark:hover:text-white"
+          data-modal-hide="authentication-modal"
+        >
+          <svg
+            aria-hidden="true"
+            class="w-5 h-5"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+          <span class="sr-only">Close modal</span>
+        </button>
+        <div class="px-6 py-6 lg:px-8">
+          <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">
+            Update your user profile
+          </h3>
+          <form class="space-y-6" action="#">
+            <div>
+              <label
+                for="email"
+                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                >Your email</label
+              >
+              <input
+                type="email"
+                name="email"
+                id="email"
+                v-model="userProfile.email"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                required
+              />
+            </div>
+            <div>
+              <label
+                for="username"
+                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                >Your username</label
+              >
+              <input
+                type="text"
+                name="username"
+                id="username"
+                v-model="userProfile.username"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                required
+              />
+            </div>
+            <button
+              type="button"
+              data-modal-hide="authentication-modal"
+              @click="updateProfile"
+              class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            >
+              Update profile
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
