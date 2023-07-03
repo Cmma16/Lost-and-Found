@@ -554,7 +554,7 @@ export default {
         <li>
           <RouterLink to="/create-report" class="flex flex-col">
             <button
-              class="rounded-full bg-[#00A651] h-10 m-3 active:scale-[0.9]"
+              class="rounded-full text-white bg-[#00A651] h-10 m-3 active:scale-[0.9]"
             >
               Create New Report
             </button>
@@ -608,7 +608,6 @@ export default {
             </div>
           </div>
           <div
-            @click="displayPostDetails(report)"
             class="flex flex-col items-center bg-white border-gray-200 rounded-lg md:flex-row md:max-w-xl"
           >
             <img
@@ -624,15 +623,24 @@ export default {
               <p>Location: {{ report.location }}</p>
               <p>Date: {{ report.date }}</p>
               <p>Time: {{ report.time }}</p>
-              <div class="flex flex-col justify-between mt-2">
-                <div class="flex">
-                  <span>
-                    {{ report.user }}
-                  </span>
+              <div class="flex flex-row justify-between">
+                <div class="flex flex-col justify-between mt-2">
+                  <div class="flex">
+                    <span>
+                      {{ report.user }}
+                    </span>
+                  </div>
+                  <p class="text-gray-600 text-sm font-normal">
+                    {{ calculateTimeElapsed(report.created_at) }}
+                  </p>
                 </div>
-                <p class="text-gray-600 text-sm font-normal">
-                  {{ calculateTimeElapsed(report.created_at) }}
-                </p>
+                <a
+                  href="#"
+                  class="pt-2 underline"
+                  @click="displayPostDetails(report)"
+                >
+                  See more..
+                </a>
               </div>
             </div>
           </div>
