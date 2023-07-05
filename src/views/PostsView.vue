@@ -488,8 +488,17 @@ export default {
             "
             :class="{ 'bg-green-500': activeTab === 'allTab' }"
           >
-            <span class="material-symbols-outlined font-bold"> apps </span>
-            <span class="ml-3">All Posts</span>
+            <span
+              :class="{ 'text-white': activeTab === 'allTab' }"
+              class="material-symbols-outlined font-bold"
+            >
+              apps
+            </span>
+            <span
+              :class="{ ' text-white': activeTab === 'allTab' }"
+              class="ml-3"
+              >All Posts</span
+            >
           </a>
         </li>
         <li>
@@ -502,10 +511,17 @@ export default {
             "
             :class="{ 'bg-green-500': activeTab === 'lostTab' }"
           >
-            <span class="material-symbols-outlined font-bold">
+            <span
+              :class="{ 'text-white': activeTab === 'lostTab' }"
+              class="material-symbols-outlined font-bold"
+            >
               conditions
             </span>
-            <span class="flex-1 ml-3 whitespace-nowrap">Lost Category</span>
+            <span
+              :class="{ 'text-white': activeTab === 'lostTab' }"
+              class="flex-1 ml-3 whitespace-nowrap"
+              >Lost Category</span
+            >
           </a>
         </li>
         <li>
@@ -518,10 +534,17 @@ export default {
             "
             :class="{ 'bg-green-500': activeTab === 'foundTab' }"
           >
-            <span class="material-symbols-outlined font-bold">
+            <span
+              :class="{ 'text-white': activeTab === 'foundTab' }"
+              class="material-symbols-outlined font-bold"
+            >
               search_check
             </span>
-            <span class="flex-1 ml-3 whitespace-nowrap">Found Category</span>
+            <span
+              :class="{ 'text-white': activeTab === 'foundTab' }"
+              class="flex-1 ml-3 whitespace-nowrap"
+              >Found Category</span
+            >
           </a>
         </li>
         <li>
@@ -534,8 +557,17 @@ export default {
             "
             :class="{ 'bg-green-500': activeTab === 'resolvedTab' }"
           >
-            <span class="material-symbols-outlined font-bold"> check_box </span>
-            <span class="flex-1 ml-3 whitespace-nowrap">Resolved</span>
+            <span
+              :class="{ 'text-white': activeTab === 'resolvedTab' }"
+              class="material-symbols-outlined font-bold"
+            >
+              check_box
+            </span>
+            <span
+              :class="{ 'text-white': activeTab === 'resolvedTab' }"
+              class="flex-1 ml-3 whitespace-nowrap"
+              >Resolved</span
+            >
           </a>
         </li>
         <li>

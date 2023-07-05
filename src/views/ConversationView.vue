@@ -1,20 +1,113 @@
 <template>
-  <button
-    data-drawer-target="default-sidebar"
-    data-drawer-toggle="default-sidebar"
-    aria-controls="default-sidebar"
-    type="button"
-    class="inline-flex items-center p-2 mt-2 ml-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+  <nav
+    class="fixed top-0 z-50 py-2 w-full bg-[#003300] border-b border-gray-200 dark:bg-[#003300] dark:border-gray-700"
   >
-    <span class="material-symbols-outlined">menu</span>
-  </button>
+    <div class="px-3 py-1 lg:px-5 lg:pl-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center justify-start">
+          <button
+            data-drawer-target="default-sidebar"
+            data-drawer-toggle="default-sidebar"
+            aria-controls="default-sidebar"
+            type="button"
+            class="inline-flex items-center p-2 mt-2 ml-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+          >
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+
+          <RouterLink :to="{ path: '/' }" class="flex ml-2 md:mr-24">
+            <img :src="logoPath" class="h-8 mr-3" alt="FoundIt! Logo" />
+            <span
+              class="self-center text-xl text-white font-semibold sm:text-2xl whitespace-nowrap dark:text-white"
+              >FoundIt!</span
+            >
+          </RouterLink>
+        </div>
+        <div class="flex items-center">
+          <div class="flex items-center ml-3">
+            <div>
+              <button
+                type="button"
+                class="flex text-sm rounded-full"
+                aria-expanded="false"
+                data-dropdown-toggle="dropdown-user"
+              >
+                <span class="sr-only">Open user menu</span>
+                <img
+                  class="w-8 h-8 rounded-full"
+                  :src="defaultProfilePic"
+                  alt="user photo"
+                />
+                <span
+                  class="text-center hidden md:block text-white px-2 text-xl"
+                  >{{ currentUser.username }}</span
+                >
+              </button>
+            </div>
+            <div
+              class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600"
+              id="dropdown-user"
+            >
+              <div class="px-4 py-3" role="none">
+                <p
+                  class="text-sm text-gray-900 md:hidden dark:text-white"
+                  role="none"
+                >
+                  {{ currentUser.username }}
+                </p>
+                <p
+                  class="text-sm font-medium text-gray-900 truncate dark:text-gray-300"
+                  role="none"
+                >
+                  {{ currentUser.email }}
+                </p>
+              </div>
+              <ul class="py-1" role="none">
+                <li>
+                  <RouterLink :to="{ path: '/posts' }">
+                    <a
+                      href="#"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                      role="menuitem"
+                      >Home</a
+                    >
+                  </RouterLink>
+                </li>
+                <li>
+                  <RouterLink :to="{ path: '/profile' }">
+                    <a
+                      href="#"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                      role="menuitem"
+                    >
+                      Profile
+                    </a>
+                  </RouterLink>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                    role="menuitem"
+                    @click="$store.dispatch('logout')"
+                    >Sign out</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
   <div class="flex flex-row py-0 sm:py-10 bg-gray-100 h-[92vh] sm:h-[100vh]">
     <aside
       id="default-sidebar"
-      class="fixed top-10 left-0 z-40 flex bg-white flex-col py-4 h-4/5 rounded-xl transition-transform -translate-x-[108%] sm:translate-x-5"
+      class="fixed top-20 left-0 z-40 flex bg-white flex-col py-4 h-4/5 rounded-xl transition-transform -translate-x-[108%] sm:translate-x-5"
       aria-label="Sidebar"
     >
-      <div class="flex mx-4 mb-4 px-7 flex-row bg-green-400 rounded-full">
+      <div class="flex mx-4 mb-4 px-7 flex-row bg-green-500 rounded-full">
         <input
           class="block w-full p-2 text-sm text-gray-900 rounded-full border-0 bg-transparent placeholder:text-white focus:ring-0 focus:outline-none"
           type="search"
@@ -24,23 +117,38 @@
       </div>
       <div class="h-full py-4 overflow-y-auto dark:bg-gray-800">
         <ul class="font-medium border-y">
-          <li v-for="(convo, index) in conversations" class="border-y py-1">
+          <li
+            v-for="(convo, index) in conversations"
+            class="border-y py-1"
+            :class="{ 'bg-[#003300]': activeTab === 'convo' + index }"
+          >
             <a
               href="#"
               @click="
                 loadMessages(convo);
                 activeTab = 'convo' + index;
               "
-              :class="{ 'bg-green-400': activeTab === 'convo' + index }"
+              :class="{ 'bg-[#003300]': activeTab === 'convo' + index }"
               class="flex flex-col px-2"
             >
               <div class="flex flex-row justify-between">
-                <span class="font-bold text-xl">{{ convo.chatTopic }}</span>
-                <span class="text-sm font-normal">
+                <span
+                  :class="{ 'text-white': activeTab === 'convo' + index }"
+                  class="font-bold text-xl"
+                >
+                  {{ convo.chatTopic }}
+                </span>
+                <span
+                  :class="{ 'text-white': activeTab === 'convo' + index }"
+                  class="text-sm font-normal"
+                >
                   {{ calculateTimeElapsed(convo.updatedAt) }}
                 </span>
               </div>
-              <span class="font-normal">
+              <span
+                :class="{ 'text-white': activeTab === 'convo' + index }"
+                class="font-normal"
+              >
                 {{
                   convo.participants[0] != currentUser.email
                     ? convo.participants[0]
@@ -54,15 +162,17 @@
     </aside>
     <div
       v-if="currentConvo.chatID != null"
-      class="bg-white flex flex-col mx-0 sm:mx-5 sm:ml-80 h-full sm:h-[80vh] w-screen rounded-xl"
+      class="bg-white flex flex-col mt-20 sm:mt-10 mx-0 sm:mx-5 sm:ml-80 h-full sm:h-[80vh] w-screen rounded-xl"
       ref="scrollToElement"
     >
       <div
         class="bg-green-500 w-full flex flex-row items-center justify-between rounded-t-xl p-2"
       >
         <div class="flex flex-col">
-          <h1 class="font-bold text-xl">{{ currentConvo.chatTopic }}</h1>
-          <p>
+          <h1 class="font-bold text-white text-xl">
+            {{ currentConvo.chatTopic }}
+          </h1>
+          <p class="text-white">
             Participant:
             {{
               currentConvo.participants[0] != currentUser.email
@@ -72,9 +182,9 @@
           </p>
         </div>
         <div class="flex flex-row">
-          <span class="material-symbols-outlined"> delete </span>
-          <span class="material-symbols-outlined"> block </span>
-          <span class="material-symbols-outlined"> report </span>
+          <span class="material-symbols-outlined text-white"> delete </span>
+          <span class="material-symbols-outlined text-white"> block </span>
+          <span class="material-symbols-outlined text-white"> report </span>
         </div>
       </div>
       <div class="h-full bg-white overflow-y-auto px-4">
@@ -104,13 +214,13 @@
       <div class="flex p-3 flex-row h-[15%] bg-white rounded-b-xl">
         <input
           v-model="messageDraft"
-          class="rounded-l-lg w-full bg-green-400 border-0 focus:ring-0 focus:outline-none placeholder:text-white"
+          class="rounded-l-lg w-full bg-green-500 border-0 focus:ring-0 focus:outline-none placeholder:text-white"
           type="text"
           placeholder="Type your message here..."
         />
         <button
           @click="sendMessage(currentConvo, currentUser.email)"
-          class="material-symbols-outlined bg-green-400 px-2 rounded-r-lg hover:bg-green-700"
+          class="material-symbols-outlined bg-green-500 px-2 rounded-r-lg hover:bg-green-700"
         >
           Send
         </button>
@@ -170,6 +280,9 @@ export default {
     const conversations = ref([]);
     const convoMessages = ref([]);
     const currentConvo = ref({});
+    const defaultImgPath = "./img/download.png";
+    const logoPath = "./img/foundIt icon.png";
+    const defaultProfilePic = "./img/profile.jpg";
 
     const messageDraft = ref("");
     const scrollToElement = ref();
@@ -354,6 +467,11 @@ export default {
       loadMessages,
       sendMessage,
       currentConvo,
+
+      defaultImgPath,
+      logoPath,
+      defaultProfilePic,
+
       activeTab,
       messageDraft,
       scrollToElement,
