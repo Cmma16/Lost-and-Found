@@ -11,7 +11,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "firebase": "^9.16.0",
+    "firebase": "^10.13.1",
     "flowbite": "^1.6.5",
     "flowbite-vue": "^0.0.10",
     "pinia": "^2.0.28",
